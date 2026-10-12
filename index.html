@@ -107,7 +107,7 @@
         <div class="container-fluid">
             <a class="navbar-brand" href="#"><i class="fas fa-id-card me-2"></i>Directorio MACs (Cloud)</a>
             <div class="d-flex align-items-center">
-                <span class="navbar-text text-light small me-3 d-none d-md-block">Versión 11.8 - Base Sustituida (19 Columnas)</span>
+                <span class="navbar-text text-light small me-3 d-none d-md-block">Versión 11.9 - Identificador de Sede por Módulo</span>
                 <button class="btn btn-warning btn-sm fw-bold shadow-sm" type="button" data-bs-toggle="modal" data-bs-target="#modalGestorSedes">
                     <i class="fas fa-edit me-1"></i> Editor Sedes
                 </button>
@@ -200,7 +200,7 @@
         <!-- Tabla Resumen por Sede -->
         <div class="card card-custom">
             <div class="card-header bg-white py-3">
-                <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-table me-2 text-success"></i>Resumen de Días por Sede (Módulo Seleccionado)</h5>
+                <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-table me-2 text-success"></i>Resumen de Días por Identificador de Sede (Módulo Seleccionado)</h5>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -208,13 +208,14 @@
                         <thead class="table-light">
                             <tr>
                                 <th>Módulo</th>
-                                <th>Sede / Ubicación</th>
+                                <th>Identificador de Sede</th>
+                                <th>Nombre Localidad / Referencia</th>
                                 <th class="text-center">Total Días Asignados</th>
                                 <th>Fechas Programadas</th>
                             </tr>
                         </thead>
                         <tbody id="tablaResumenSedes">
-                            <tr><td colspan="4" class="text-center text-muted py-3">Aún no hay días asignados para este módulo.</td></tr>
+                            <tr><td colspan="5" class="text-center text-muted py-3">Aún no hay días asignados para este módulo.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -233,8 +234,9 @@
                 <div class="modal-body">
                     <input type="hidden" id="modalFechaInput">
                     <div class="mb-3">
-                        <label for="selectSedeModal" class="form-label fw-bold">Seleccione Sede:</label>
+                        <label for="selectSedeModal" class="form-label fw-bold">Seleccione Identificador de Sede:</label>
                         <select id="selectSedeModal" class="form-select"></select>
+                        <div class="form-text small text-muted mt-1" id="infoSedeSeleccionadaModal"></div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -259,7 +261,8 @@
                             <thead class="table-secondary">
                                 <tr>
                                     <th>Módulo MAC</th>
-                                    <th>Sede / Ubicación</th>
+                                    <th>Identificador Sede</th>
+                                    <th>Localidad</th>
                                     <th class="text-center">Días Asignados</th>
                                     <th>Fechas</th>
                                 </tr>
@@ -366,7 +369,7 @@
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
 
-        // --- NUEVA BASE DE DATOS DE SEDES (19 COLUMNAS EXACTAS) ---
+        // --- BASE DE DATOS DE SEDES (19 Columnas exactas) ---
         const columnasSedes = [
             "identificador sede", "CVE ENT", "CVE DTO", "CVE MPO", "NOMBRE MUNICIPIO", "CVE DE MODULO", 
             "TIPO DE MODULO", "SECCION SEDE", "TIPO SECCION", "CVE LOCALIDAD", "NOMBRE LOCALIDAD", 
@@ -475,12 +478,23 @@
                 actualizarResumen();
             });
 
+            document.getElementById('selectSedeModal').addEventListener('change', (e) => {
+                const idSede = e.target.value;
+                const sedeData = catalogoSedes.find(s => s[0] === idSede);
+                const infoDiv = document.getElementById('infoSedeSeleccionadaModal');
+                if (sedeData) {
+                    infoDiv.innerHTML = `<i class="fas fa-map-marker-alt text-danger me-1"></i> <strong>Localidad:</strong> ${sedeData[10]} | <strong>Dirección:</strong> ${sedeData[11]}`;
+                } else {
+                    infoDiv.innerHTML = '';
+                }
+            });
+
             document.getElementById('modalListadoSedes').addEventListener('show.bs.modal', actualizarModalListadoSedes);
 
             renderFestivos();
         });
 
-        // --- HERRAMIENTAS GESTOR DE SEDES ---
+        // --- GESTOR DE SEDES ---
 
         function renderHeaderGestor() {
             const tr = document.getElementById('theadSedesTr');
@@ -566,31 +580,27 @@
         };
 
         window.borrarTodoCatalogo = function() {
-            if(confirm("¡ATENCIÓN! ¿Estás seguro de borrar TODOS los registros del catálogo? Esta acción vaciará la tabla.")) {
+            if(confirm("¡ATENCIÓN! ¿Estás seguro de borrar TODOS los registros del catálogo?")) {
                 catalogoSedes = [];
                 renderEditorSedes();
             }
         };
 
         window.exportarCSV = function() {
-            // Se añade "\uFEFF" (BOM) al principio para forzar a Excel a leer como UTF-8
             let csvContent = "\uFEFF"; 
             csvContent += columnasSedes.join(",") + "\n";
             
             catalogoSedes.forEach(row => {
-                // Asegurar que si una celda tiene comas o saltos de línea internos, no rompa el CSV
                 let rowSanitized = row.map(v => {
                     let val = v !== undefined ? String(v) : "";
-                    val = val.replace(/"/g, '""'); // Escapar comillas dobles
-                    return `"${val}"`; // Envolver en comillas
+                    val = val.replace(/"/g, '""');
+                    return `"${val}"`;
                 }).join(",");
                 csvContent += rowSanitized + "\n";
             });
             
-            // Usamos Blob para manejar la codificación UTF-8 correctamente en cualquier navegador
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
-            
             const link = document.createElement("a");
             link.setAttribute("href", url);
             link.setAttribute("download", "catalogo_sedes_respaldo.csv");
@@ -608,23 +618,19 @@
             }
             
             const reader = new FileReader();
-            // Leer como UTF-8 por defecto
             reader.readAsText(file, "UTF-8");
             reader.onload = function(e) {
                 const content = e.target.result;
                 const rows = content.split('\n');
                 if(rows.length > 1) {
-                    if(confirm("¿Deseas reemplazar el catálogo actual con este archivo? (Aceptar = Reemplazar, Cancelar = Solo agregar)")) {
+                    if(confirm("¿Deseas reemplazar el catálogo actual con este archivo?")) {
                         catalogoSedes = [];
                     }
-                    // Ignorar la cabecera (index 0) y líneas vacías
                     for(let i=1; i<rows.length; i++){
                         if(rows[i].trim() !== ""){
-                            // Regex para leer CSV respetando comillas
                             let valores = rows[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
                             if(valores){
                                 valores = valores.map(v => v.replace(/^"|"$/g, '').replace(/""/g, '"'));
-                                // Asegurar que tenga la misma longitud que las columnas (19 ahora)
                                 while(valores.length < columnasSedes.length) valores.push("");
                                 catalogoSedes.push(valores.slice(0, columnasSedes.length));
                             }
@@ -637,7 +643,8 @@
             };
         };
 
-        // --- FUNCIONES CALENDARIO ---
+        // --- CALENDARIO Y FILTRADO POR MÓDULO ---
+
         function actualizarInfoHorario() {
             const modulo = document.getElementById('selectModulo').value;
             document.getElementById('infoHorarioModulo').innerHTML = `<i class="fas fa-clock text-muted me-1"></i> <strong>Horario:</strong> ${horariosTexto[modulo]}`;
@@ -667,7 +674,7 @@
         }
 
         function obtenerSedesPorModulo(moduloCVE) {
-            // CVE DE MODULO ahora es la columna índice 5
+            // Filtra el catálogo donde "CVE DE MODULO" (columna índice 5) coincide con el módulo activo
             return catalogoSedes.filter(fila => fila[5] === moduloCVE);
         }
 
@@ -723,12 +730,10 @@
                     contenidoHtml += `<span class="text-muted fst-italic" style="font-size:0.7rem;">Sin Asignar</span>`;
                 } else if (dbRegistros[dbKey] && dbRegistros[dbKey].identificadorSede) {
                     const idSede = dbRegistros[dbKey].identificadorSede;
-                    const sedeData = catalogoSedes.find(s => s[0] === idSede);
-                    // Columna NOMBRE LOCALIDAD es la 10
-                    const sedeVisual = sedeData ? sedeData[10] : idSede; 
-                    contenidoHtml += `<span class="badge badge-sede badge-sede-${moduloActual} mt-1 shadow-sm fw-bold">${sedeVisual}</span>`;
+                    // Muestra directamente el Identificador de Sede seleccionado en el calendario
+                    contenidoHtml += `<span class="badge badge-sede badge-sede-${moduloActual} mt-1 shadow-sm fw-bold">${idSede}</span>`;
                 } else {
-                    contenidoHtml += `<span class="text-primary fw-bold fst-italic" style="font-size:0.75rem;"><i class="fas fa-plus-circle me-1"></i>Escojase la Sede</span>`;
+                    contenidoHtml += `<span class="text-primary fw-bold fst-italic" style="font-size:0.75rem;"><i class="fas fa-plus-circle me-1"></i>Asignar Sede</span>`;
                 }
 
                 cell.innerHTML = contenidoHtml;
@@ -750,19 +755,32 @@
             selectSede.innerHTML = '';
             const dbKey = `${moduloActual}_${fechaStr.replace(/-/g, '_')}`;
 
-            const sedesDisponibles = obtenerSedesPorModulo(moduloActual);
+            // FILTRAR ESTRICTAMENTE LAS SEDES QUE CORRESPONDEN A ESTE MÓDULO POR "CVE DE MODULO"
+            const sedesDelModulo = obtenerSedesPorModulo(moduloActual);
 
-            sedesDisponibles.forEach(sedeData => {
-                const idSede = sedeData[0]; // identificador sede
-                const nombreSede = sedeData[10]; // NOMBRE LOCALIDAD
+            if (sedesDelModulo.length === 0) {
                 const opt = document.createElement('option');
-                opt.value = idSede;
-                opt.textContent = nombreSede; 
-                if (dbRegistros[dbKey] && dbRegistros[dbKey].identificadorSede === idSede) {
-                    opt.selected = true;
-                }
+                opt.value = "";
+                opt.textContent = "No hay sedes registradas para este módulo en el Catálogo";
                 selectSede.appendChild(opt);
-            });
+                document.getElementById('infoSedeSeleccionadaModal').innerHTML = '';
+            } else {
+                sedesDelModulo.forEach(sedeData => {
+                    const idSede = sedeData[0]; // identificador sede
+                    const nombreLocalidad = sedeData[10]; // nombre localidad
+                    const opt = document.createElement('option');
+                    opt.value = idSede;
+                    // El combo muestra claramente el Identificador de Sede acompañado de su localidad para referencia
+                    opt.textContent = `${idSede} — (${nombreLocalidad})`; 
+                    
+                    if (dbRegistros[dbKey] && dbRegistros[dbKey].identificadorSede === idSede) {
+                        opt.selected = true;
+                    }
+                    selectSede.appendChild(opt);
+                });
+                // Disparar evento para cargar info inicial
+                selectSede.dispatchEvent(new Event('change'));
+            }
 
             const modal = new bootstrap.Modal(document.getElementById('modalAsignarSede'));
             modal.show();
@@ -781,12 +799,12 @@
                     totalTrabajados++;
                     const idSede = reg.identificadorSede;
                     const sedeData = catalogoSedes.find(s => s[0] === idSede);
-                    const sedeVisual = sedeData ? sedeData[10] : idSede; 
+                    const nombreLocalidad = sedeData ? sedeData[10] : "Desconocida";
                     
-                    if (!conteoPorSede[sedeVisual]) {
-                        conteoPorSede[sedeVisual] = { modulo: reg.modulo, fechas: [] };
+                    if (!conteoPorSede[idSede]) {
+                        conteoPorSede[idSede] = { modulo: reg.modulo, localidad: nombreLocalidad, fechas: [] };
                     }
-                    conteoPorSede[sedeVisual].fechas.push(reg.fecha);
+                    conteoPorSede[idSede].fechas.push(reg.fecha);
                 }
             });
 
@@ -794,18 +812,19 @@
 
             const sedesKeys = Object.keys(conteoPorSede);
             if (sedesKeys.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-3">Aún no hay días asignados para este módulo.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-3">Aún no hay días asignados para este módulo.</td></tr>`;
                 return;
             }
 
-            sedesKeys.forEach(sede => {
-                const datos = conteoPorSede[sede];
+            sedesKeys.forEach(idSede => {
+                const datos = conteoPorSede[idSede];
                 datos.fechas.sort();
                 const badgeColorClass = `badge-sede-${moduloActual}`;
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td><span class="badge bg-secondary">${datos.modulo}</span></td>
-                    <td class="fw-bold">${sede}</td>
+                    <td class="fw-bold text-primary">${idSede}</td>
+                    <td>${datos.localidad}</td>
                     <td class="text-center"><span class="badge ${badgeColorClass} rounded-pill px-3">${datos.fechas.length} días</span></td>
                     <td class="small text-muted">${datos.fechas.join(', ')}</td>
                 `;
@@ -820,18 +839,16 @@
 
             catalogoSedes.forEach(sedeData => {
                 const mod = sedeData[5];
-                const sedeVisual = sedeData[10];
-                const key = `${mod}_${sedeVisual}`;
-                conteoGeneral[key] = { modulo: mod, sede: sedeVisual, fechas: [] };
+                const idSede = sedeData[0];
+                const localidad = sedeData[10];
+                const key = `${mod}_${idSede}`;
+                conteoGeneral[key] = { modulo: mod, idSede: idSede, localidad: localidad, fechas: [] };
             });
 
             Object.values(dbRegistros).forEach(reg => {
                 if (reg && reg.modulo && reg.identificadorSede) {
                     const idSede = reg.identificadorSede;
-                    const sedeData = catalogoSedes.find(s => s[0] === idSede);
-                    const sedeVisual = sedeData ? sedeData[10] : idSede; 
-                    
-                    const key = `${reg.modulo}_${sedeVisual}`;
+                    const key = `${reg.modulo}_${idSede}`;
                     if (conteoGeneral[key]) {
                         conteoGeneral[key].fechas.push(reg.fecha);
                     }
@@ -843,7 +860,8 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td><span class="badge bg-secondary">${item.modulo}</span></td>
-                    <td class="fw-bold">${item.sede}</td>
+                    <td class="fw-bold text-primary">${item.idSede}</td>
+                    <td>${item.localidad}</td>
                     <td class="text-center"><span class="badge bg-primary rounded-pill px-3">${item.fechas.length} días</span></td>
                     <td class="small text-muted">${item.fechas.length > 0 ? item.fechas.join(', ') : '<span class="fst-italic text-muted">Sin días asignados</span>'}</td>
                 `;
