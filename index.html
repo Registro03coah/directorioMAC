@@ -37,7 +37,7 @@
             background: #ffffff;
             border: 1px solid #dee2e6;
             border-radius: 6px;
-            min-height: 85px;
+            min-height: 90px;
             padding: 6px;
             cursor: pointer;
             transition: all 0.2s;
@@ -60,6 +60,12 @@
             background-color: #ffe3e3;
             border-color: #ff8787;
         }
+        
+        /* Colores tenues por Módulo */
+        .theme-050351 { background-color: #e7f1ff !important; border-color: #b6d4fe !important; }
+        .theme-050353 { background-color: #fff3cd !important; border-color: #ffeeba !important; }
+        .theme-050354 { background-color: #d1e7dd !important; border-color: #a3cfbb !important; }
+
         .day-number {
             font-weight: bold;
             font-size: 0.9rem;
@@ -70,6 +76,13 @@
             word-break: break-word;
             text-align: left;
         }
+        .horario-info {
+            font-size: 0.8rem;
+            color: #495057;
+            background: #e9ecef;
+            padding: 6px 10px;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
@@ -77,8 +90,8 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#"><i class="fas id-card me-2"></i>Directorio MACs (Cloud)</a>
-            <span class="navbar-text text-light small">Versión 11.0 - Gestión de Campañas</span>
+            <a class="navbar-brand" href="#"><i class="fas fa-id-card me-2"></i>Directorio MACs (Cloud)</a>
+            <span class="navbar-text text-light small">Versión 11.0 - Firebase Integrado</span>
         </div>
     </nav>
 
@@ -89,11 +102,15 @@
             <div class="col-md-4">
                 <div class="card card-custom p-3 h-100">
                     <label for="selectModulo" class="form-label fw-bold text-primary"><i class="fas fa-building me-1"></i> Seleccionar Módulo</label>
-                    <select id="selectModulo" class="form-select mb-3">
+                    <select id="selectModulo" class="form-select mb-2">
                         <option value="050351">050351 - Módulo Fijo (Monclova)</option>
                         <option value="050353">050353 - Semifijo / Norte</option>
                         <option value="050354">050354 - Móvil / Región Centro</option>
                     </select>
+                    
+                    <div id="infoHorarioModulo" class="horario-info mb-3">
+                        <i class="fas fa-clock text-muted me-1"></i> <strong>Horario:</strong> Lunes a Sábado (08:00 AM - 03:00 PM)
+                    </div>
 
                     <label class="form-label fw-bold small text-secondary"><i class="fas fa-calendar-alt me-1"></i> Periodo de Campaña</label>
                     <div class="row g-2">
@@ -115,7 +132,6 @@
                         <button class="btn btn-outline-danger" type="button" id="btnAgregarFestivo">Agregar</button>
                     </div>
                     <div style="max-height: 90px; overflow-y: auto;" id="listaFestivos" class="border rounded p-1 bg-light small">
-                        <!-- Lista dinámica de festivos -->
                         <span class="text-muted fst-italic">Sin días festivos registrados.</span>
                     </div>
                 </div>
@@ -152,13 +168,11 @@
                     <div class="calendar-day-header">Sábado</div>
                 </div>
                 <!-- Celdas del Calendario -->
-                <div class="calendar-grid" id="calendarGrid">
-                    <!-- Generado por JavaScript -->
-                </div>
+                <div class="calendar-grid" id="calendarGrid"></div>
             </div>
         </div>
 
-        <!-- Tabla Resumen por Sede (Base de Datos / Exportación) -->
+        <!-- Tabla Resumen por Sede (Base de Datos) -->
         <div class="card card-custom">
             <div class="card-header bg-white py-3">
                 <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-table me-2 text-success"></i>Resumen de Días por Sede (Base de Datos)</h5>
@@ -198,9 +212,7 @@
                     <input type="hidden" id="modalFechaInput">
                     <div class="mb-3">
                         <label for="selectSedeModal" class="form-label fw-bold">Seleccione Sede o Estatus:</label>
-                        <select id="selectSedeModal" class="form-select">
-                            <!-- Opciones dinámicas según módulo -->
-                        </select>
+                        <select id="selectSedeModal" class="form-select"></select>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -213,7 +225,27 @@
 
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
+    
+    <!-- Firebase SDK (Modular) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+        // CONFIGURACIÓN DE FIREBASE (Reemplaza con tus credenciales de proyecto)
+        const firebaseConfig = {
+            apiKey: "AIzaSyA6jvnsXZwF2anOJo3VadfNvn7Fl6Z5efY",
+            authDomain: "sistema-mac-reportes.firebaseapp.com",
+            databaseURL: "https://sistema-mac-reportes-default-rtdb.firebaseio.com",
+            projectId: "sistema-mac-reportes",
+            storageBucket: "sistema-mac-reportes.firebasestorage.app",
+            messagingSenderId: "776250701305",
+            appId: "1:776250701305:web:ac542564b7f7a136cef928"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
         // Sedes según Módulo
         const sedesPorModulo = {
             "050351": ["Módulo Fijo Monclova", "Festivo"],
@@ -221,20 +253,25 @@
             "050354": ["Abasolo", "Candela", "Castaños", "Dolores", "Ejido El Oro", "Escobedo", "Espinazo", "Estación Bajan", "Huizachal", "Juárez", "Monclova", "Praderas", "Primero de Mayo", "Progreso", "San Alberto", "San Jose de Aura", "Festivo"]
         };
 
-        // Base de datos local en memoria: clave 'YYYY-MM-DD' -> { modulo, fecha, sede }
-        let dbRegistros = {};
-        let diasFestivos = ["2026-01-01", "2026-02-02", "2026-03-16"]; // Ejemplos iniciales
-        let mesActivo = 0; // 0: Enero, 1: Febrero, 2: Marzo (Año 2026 por defecto)
+        const horariosTexto = {
+            "050351": "Lunes a Sábado (08:00 AM - 03:00 PM)",
+            "050353": "Lunes a Viernes (09:00 AM - 04:00 PM)",
+            "050354": "Lunes a Viernes (09:00 AM - 04:00 PM)"
+        };
 
-        const mesesNombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+        let dbRegistros = {};
+        let diasFestivos = ["2026-01-01", "2026-02-02", "2026-03-16"];
+        let mesActivo = 0;
 
         document.addEventListener('DOMContentLoaded', () => {
+            actualizarInfoHorario();
             renderFestivos();
             setupMesButtons();
             renderCalendar();
             actualizarResumen();
 
             document.getElementById('selectModulo').addEventListener('change', () => {
+                actualizarInfoHorario();
                 renderCalendar();
                 actualizarResumen();
             });
@@ -251,16 +288,22 @@
                 }
             });
 
-            document.getElementById('btnGuardarAsignacion').addEventListener('click', () => {
+            document.getElementById('btnGuardarAsignacion').addEventListener('click', async () => {
                 const fecha = document.getElementById('modalFechaInput').value;
                 const sede = document.getElementById('selectSedeModal').value;
                 const modulo = document.getElementById('selectModulo').value;
 
-                if (sede === "Festivo" || sede.includes("Festivo")) {
+                if (sede === "Festivo") {
                     if (!diasFestivos.includes(fecha)) diasFestivos.push(fecha);
                     delete dbRegistros[fecha];
                 } else {
                     dbRegistros[fecha] = { modulo, fecha, sede };
+                    // Guardar en Firestore Firebase
+                    try {
+                        await setDoc(doc(db, "directorioMACs", fecha), { modulo, fecha, sede });
+                    } catch (e) {
+                        console.error("Error al guardar en Firebase:", e);
+                    }
                 }
 
                 const modalEl = document.getElementById('modalAsignarSede');
@@ -272,6 +315,11 @@
             });
         });
 
+        function actualizarInfoHorario() {
+            const modulo = document.getElementById('selectModulo').value;
+            document.getElementById('infoHorarioModulo').innerHTML = `<i class="fas fa-clock text-muted me-1"></i> <strong>Horario:</strong> ${horariosTexto[modulo]}`;
+        }
+
         function renderFestivos() {
             const container = document.getElementById('listaFestivos');
             if (diasFestivos.length === 0) {
@@ -279,7 +327,7 @@
                 return;
             }
             container.innerHTML = diasFestivos.map(d => `
-                <span class="badge bg-danger me-1 mb-1 p-1">${d} <i class="fas fa-times cursor-pointer ms-1" onclick="eliminarFestivo('${d}')"></i></span>
+                <span class="badge bg-danger me-1 mb-1 p-1">${d} <i class="fas fa-times cursor-pointer ms-1" onclick="window.eliminarFestivo('${d}')"></i></span>
             `).join('');
         }
 
@@ -307,12 +355,12 @@
             grid.innerHTML = '';
 
             const anio = 2026;
-            const mes = mesActivo; // 0, 1, 2
-            const primerDiaIndex = new Date(anio, mes, 1).getDay(); // 0: Dom, 1: Lun...
+            const mes = mesActivo;
+            const primerDiaIndex = new Date(anio, mes, 1).getDay();
             const totalDiasMes = new Date(anio, mes + 1, 0).getDate();
             const moduloActual = document.getElementById('selectModulo').value;
 
-            // Rellenar espacios vacíos previos al 1er día del mes
+            // Rellenar espacios vacíos
             for (let i = 0; i < primerDiaIndex; i++) {
                 const emptyCell = document.createElement('div');
                 emptyCell.className = 'calendar-cell disabled';
@@ -324,22 +372,23 @@
                 const mesStr = String(mes + 1).padStart(2, '0');
                 const diaStr = String(dia).padStart(2, '0');
                 const fechaStr = `${anio}-${mesStr}-${diaStr}`;
-                const diaSemana = new Date(anio, mes, dia).getDay(); // 0 es Domingo
+                const diaSemana = new Date(anio, mes, dia).getDay(); // 0: Dom, 6: Sáb
 
                 const cell = document.createElement('div');
-                cell.className = 'calendar-cell';
+                cell.className = `calendar-cell theme-${moduloActual}`;
 
                 let isFestivo = diasFestivos.includes(fechaStr);
-                let esDomingo = (diaSemana === 0);
+                let esFinDeSemanaMovil = (moduloActual !== "050351" && (diaSemana === 0 || diaSemana === 6));
+                let esDomingoFijo = (moduloActual === "050351" && diaSemana === 0);
 
                 if (isFestivo) {
-                    cell.classList.add('festive');
-                } else if (esDomingo && moduloActual === "050351") {
-                    cell.classList.add('disabled');
+                    cell.className = 'calendar-cell festive';
+                } else if (esFinDeSemanaMovil || esDomingoFijo) {
+                    cell.className = 'calendar-cell disabled';
                 }
 
-                // Autorellenar Módulo Fijo (050351) de lunes a sábado si no es festivo
-                if (moduloActual === "050351" && !esDomingo && !isFestivo && !dbRegistros[fechaStr]) {
+                // Autorellenar Módulo Fijo (050351) de lunes a sábado por defecto si no existe
+                if (moduloActual === "050351" && !esDomingoFijo && !isFestivo && !dbRegistros[fechaStr]) {
                     dbRegistros[fechaStr] = { modulo: "050351", fecha: fechaStr, sede: "Módulo Fijo Monclova" };
                 }
 
@@ -347,20 +396,21 @@
                 
                 if (isFestivo) {
                     contenidoHtml += `<span class="badge bg-danger badge-sede mt-1">Festivo / Inhábil</span>`;
-                } else if (esDomingo && moduloActual === "050351") {
+                } else if (esFinDeSemanaMovil) {
+                    contenidoHtml += `<span class="badge bg-secondary badge-sede mt-1">Inactivo (Fin de semana)</span>`;
+                } else if (esDomingoFijo) {
                     contenidoHtml += `<span class="badge bg-secondary badge-sede mt-1">Inactivo (Dom)</span>`;
                 } else if (dbRegistros[fechaStr]) {
                     const sedeActual = dbRegistros[fechaStr].sede;
-                    const badgeColor = sedeActual === "Festivo" ? "bg-danger" : "bg-success";
-                    contenidoHtml += `<span class="badge ${badgeColor} badge-sede mt-1">${sedeActual}</span>`;
+                    contenidoHtml += `<span class="badge bg-dark badge-sede mt-1 text-white">${sedeActual}</span>`;
                 } else {
-                    contenidoHtml += `<span class="text-muted fst-italic" style="font-size:0.65rem;">Sin asignar</span>`;
+                    contenidoHtml += `<span class="text-primary fw-semibold fst-italic" style="font-size:0.7rem;"><i class="fas fa-plus-circle me-1"></i>Selecciona la Sede</span>`;
                 }
 
                 cell.innerHTML = contenidoHtml;
 
-                // Evento clic para asignar sede
-                if (!esDomingo || moduloActual !== "050351") {
+                // Evento clic para abrir modal
+                if (!isFestivo && !esFinDeSemanaMovil && !esDomingoFijo) {
                     cell.addEventListener('click', () => abrirModalSede(fechaStr));
                 }
 
