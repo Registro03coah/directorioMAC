@@ -99,7 +99,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
         <div class="container-fluid">
             <a class="navbar-brand" href="#"><i class="fas fa-id-card me-2"></i>Directorio MACs (Cloud)</a>
-            <span class="navbar-text text-light small">Versión 11.3 - Firebase Sincronizado</span>
+            <span class="navbar-text text-light small">Versión 11.4 - Firebase Sincronizado</span>
         </div>
     </nav>
 
@@ -163,7 +163,7 @@
         <!-- Selector de Mes y Calendario -->
         <div class="card card-custom mb-4">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-calendar-day me-2 text-primary"></i>Calendario Operativo y Sedes (Versión 11.3)</h5>
+                <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-calendar-day me-2 text-primary"></i>Calendario Operativo y Sedes (Versión 11.4)</h5>
                 <div class="btn-group" role="group" id="mesSelectorBtns">
                     <button type="button" class="btn btn-outline-primary active" data-mes="8">Septiembre</button>
                     <button type="button" class="btn btn-outline-primary" data-mes="9">Octubre</button>
@@ -293,11 +293,11 @@
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
 
-        // Sedes según Módulo
+        // Sedes según Módulo (Diferenciando internamente 380 Monclova para 050351 y 364 Monclova para 050354)
         const sedesPorModulo = {
-            "050351": ["GUTIERREZ"],
+            "050351": ["380 Monclova"],
             "050353": ["Agujita", "Allende", "Cloete", "Guerrero", "Hidalgo", "Nueva Rosita", "Sabinas", "Villa Union"],
-            "050354": ["Abasolo", "Candela", "Castaños", "Dolores", "Ejido El Oro", "Escobedo", "Espinazo", "Estacion Bajan", "Huizachal", "Juarez", "GUTIERREZ", "La Joya", "La Soledad", "Los Rodriguez", "Obayos", "Presa Don Martin", "Praderas", "Primero de Mayo", "Progreso", "San Alberto", "San Jose de Aura"]
+            "050354": ["Abasolo", "Candela", "Castaños", "Dolores", "Ejido El Oro", "Escobedo", "Espinazo", "Estacion Bajan", "Huizachal", "Juarez", "364 Monclova", "La Joya", "La Soledad", "Los Rodriguez", "Obayos", "Presa Don Martin", "Praderas", "Primero de Mayo", "Progreso", "San Alberto", "San Jose de Aura"]
         };
 
         const horariosTexto = {
@@ -440,6 +440,11 @@
                     cell.className = 'calendar-cell disabled';
                 }
 
+                // Autorellenar Módulo Fijo (050351) por defecto con 380 Monclova (visualizado como Monclova) de lunes a sábado
+                if (moduloActual === "050351" && !esDomingoFijo && !isFestivo && !dbRegistros[dbKey]) {
+                    dbRegistros[dbKey] = { modulo: "050351", fecha: fechaStr, sede: "380 Monclova" };
+                }
+
                 let contenidoHtml = `<div class="day-number">${dia}</div>`;
                 
                 if (isFestivo) {
@@ -447,8 +452,10 @@
                 } else if (esFinDeSemanaMovil || esDomingoFijo) {
                     contenidoHtml += `<span class="text-muted fst-italic" style="font-size:0.7rem;">Sin Asignar</span>`;
                 } else if (dbRegistros[dbKey] && dbRegistros[dbKey].sede) {
-                    const sedeActual = dbRegistros[dbKey].sede;
-                    contenidoHtml += `<span class="badge badge-sede badge-sede-${moduloActual} mt-1 shadow-sm fw-bold">${sedeActual}</span>`;
+                    // Mostrar siempre "Monclova" al usuario para ambas claves internas
+                    const sedeReal = dbRegistros[dbKey].sede;
+                    const sedeVisual = sedeReal.includes("Monclova") ? "Monclova" : sedeReal;
+                    contenidoHtml += `<span class="badge badge-sede badge-sede-${moduloActual} mt-1 shadow-sm fw-bold">${sedeVisual}</span>`;
                 } else {
                     contenidoHtml += `<span class="text-primary fw-bold fst-italic" style="font-size:0.75rem;"><i class="fas fa-plus-circle me-1"></i>Escojase la Sede</span>`;
                 }
@@ -475,7 +482,8 @@
             sedesPorModulo[moduloActual].forEach(sede => {
                 const opt = document.createElement('option');
                 opt.value = sede;
-                opt.textContent = sede;
+                // Mostrar "Monclova" en lugar del código interno al seleccionar
+                opt.textContent = sede.includes("Monclova") ? "Monclova" : sede;
                 if (dbRegistros[dbKey] && dbRegistros[dbKey].sede === sede) {
                     opt.selected = true;
                 }
@@ -497,10 +505,11 @@
             Object.values(dbRegistros).forEach(reg => {
                 if (reg && reg.modulo === moduloActual && reg.sede) {
                     totalTrabajados++;
-                    if (!conteoPorSede[reg.sede]) {
-                        conteoPorSede[reg.sede] = { modulo: reg.modulo, fechas: [] };
+                    let sedeVisual = reg.sede.includes("Monclova") ? "Monclova" : reg.sede;
+                    if (!conteoPorSede[sedeVisual]) {
+                        conteoPorSede[sedeVisual] = { modulo: reg.modulo, fechas: [] };
                     }
-                    conteoPorSede[reg.sede].fechas.push(reg.fecha);
+                    conteoPorSede[sedeVisual].fechas.push(reg.fecha);
                 }
             });
 
@@ -535,14 +544,16 @@
 
             Object.keys(sedesPorModulo).forEach(mod => {
                 sedesPorModulo[mod].forEach(sede => {
-                    const key = `${mod}_${sede}`;
-                    conteoGeneral[key] = { modulo: mod, sede: sede, fechas: [] };
+                    let sedeVisual = sede.includes("Monclova") ? "Monclova" : sede;
+                    const key = `${mod}_${sedeVisual}`;
+                    conteoGeneral[key] = { modulo: mod, sede: sedeVisual, fechas: [] };
                 });
             });
 
             Object.values(dbRegistros).forEach(reg => {
                 if (reg && reg.modulo && reg.sede) {
-                    const key = `${reg.modulo}_${reg.sede}`;
+                    let sedeVisual = reg.sede.includes("Monclova") ? "Monclova" : reg.sede;
+                    const key = `${reg.modulo}_${sedeVisual}`;
                     if (conteoGeneral[key]) {
                         conteoGeneral[key].fechas.push(reg.fecha);
                     }
