@@ -92,10 +92,21 @@
             border-radius: 5px;
         }
 
-        /* Estilos Editor Sedes */
-        #modalGestorSedes th { background-color: #1b396b !important; color: white !important; white-space: nowrap; font-size: 0.8rem;}
-        #modalGestorSedes td { vertical-align: middle; white-space: nowrap; max-width: 150px; overflow: hidden; text-overflow: ellipsis; font-size: 0.8rem;}
-        #modalGestorSedes td:hover { white-space: normal; word-break: break-word; overflow: visible; }
+        /* Estilos Editor Sedes - Ampliados para mejor visualización */
+        #modalGestorSedes th { background-color: #1b396b !important; color: white !important; white-space: nowrap; font-size: 0.8rem; padding: 10px;}
+        #modalGestorSedes td { vertical-align: middle; white-space: nowrap; max-width: 180px; overflow: hidden; text-overflow: ellipsis; font-size: 0.8rem; padding: 8px;}
+        #modalGestorSedes td:hover { white-space: normal; word-break: break-word; overflow: visible; background-color: #f8f9fa; z-index: 10; position: relative;}
+        .table-gestor-wrapper { max-height: calc(100vh - 200px); overflow-y: auto; overflow-x: auto; }
+        
+        .toolbar-gestor {
+            background-color: #f1f3f5;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
     </style>
 </head>
 <body>
@@ -105,8 +116,7 @@
         <div class="container-fluid">
             <a class="navbar-brand" href="#"><i class="fas fa-id-card me-2"></i>Directorio MACs (Cloud)</a>
             <div class="d-flex align-items-center">
-                <span class="navbar-text text-light small me-3 d-none d-md-block">Versión 11.5 - Unificada</span>
-                <!-- Botón Editor de Sedes -->
+                <span class="navbar-text text-light small me-3 d-none d-md-block">Versión 11.6 - Unificada Avanzada</span>
                 <button class="btn btn-warning btn-sm fw-bold shadow-sm" type="button" data-bs-toggle="modal" data-bs-target="#modalGestorSedes">
                     <i class="fas fa-edit me-1"></i> Editor Sedes
                 </button>
@@ -196,7 +206,7 @@
             </div>
         </div>
 
-        <!-- Tabla Resumen por Sede (Base de Datos) -->
+        <!-- Tabla Resumen por Sede -->
         <div class="card card-custom">
             <div class="card-header bg-white py-3">
                 <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-table me-2 text-success"></i>Resumen de Días por Sede (Módulo Seleccionado)</h5>
@@ -213,9 +223,7 @@
                             </tr>
                         </thead>
                         <tbody id="tablaResumenSedes">
-                            <tr>
-                                <td colspan="4" class="text-center text-muted py-3">Aún no hay días asignados para este módulo.</td>
-                            </tr>
+                            <tr><td colspan="4" class="text-center text-muted py-3">Aún no hay días asignados para este módulo.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -235,7 +243,6 @@
                     <input type="hidden" id="modalFechaInput">
                     <div class="mb-3">
                         <label for="selectSedeModal" class="form-label fw-bold">Seleccione Sede:</label>
-                        <!-- Se alimenta dinámicamente de la base de datos de sedes -->
                         <select id="selectSedeModal" class="form-select"></select>
                     </div>
                 </div>
@@ -266,9 +273,7 @@
                                     <th>Fechas</th>
                                 </tr>
                             </thead>
-                            <tbody id="tablaModalListadoSedes">
-                                <!-- Generado dinámicamente -->
-                            </tbody>
+                            <tbody id="tablaModalListadoSedes"></tbody>
                         </table>
                     </div>
                 </div>
@@ -279,43 +284,43 @@
         </div>
     </div>
 
-    <!-- MODAL GESTOR DE SEDES (Integrado) -->
+    <!-- MODAL GESTOR DE SEDES (Con nuevas herramientas) -->
     <div class="modal fade" id="modalGestorSedes" tabindex="-1">
         <div class="modal-dialog modal-fullscreen">
             <div class="modal-content">
                 <div class="modal-header bg-dark text-white">
-                    <h5 class="modal-title fw-bold"><i class="fas fa-table me-2"></i>Gestor Maestro de Sedes (Catálogo Base)</h5>
+                    <h5 class="modal-title fw-bold"><i class="fas fa-database me-2"></i>Gestor Maestro de Sedes (Catálogo Base)</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body bg-light">
-                    <div class="table-responsive bg-white shadow-sm border rounded">
+                    
+                    <!-- Barra de Herramientas -->
+                    <div class="toolbar-gestor shadow-sm">
+                        <button class="btn btn-success btn-sm fw-bold" onclick="abrirEdicionSede(-1)">
+                            <i class="fas fa-plus-circle me-1"></i> Nuevo Registro
+                        </button>
+                        
+                        <button class="btn btn-primary btn-sm fw-bold" onclick="exportarCSV()">
+                            <i class="fas fa-download me-1"></i> Respaldo (.csv)
+                        </button>
+                        
+                        <div class="d-flex align-items-center border-start border-end px-3">
+                            <input class="form-control form-control-sm me-2" type="file" id="inputCsvUpload" accept=".csv" style="max-width: 250px;">
+                            <button class="btn btn-secondary btn-sm fw-bold" onclick="importarCSV()">
+                                <i class="fas fa-upload me-1"></i> Subir Excel
+                            </button>
+                        </div>
+                        
+                        <button class="btn btn-danger btn-sm fw-bold ms-auto" onclick="borrarTodoCatalogo()">
+                            <i class="fas fa-trash-alt me-1"></i> Borrar Todo
+                        </button>
+                    </div>
+
+                    <div class="table-gestor-wrapper bg-white shadow-sm border rounded">
                         <table class="table table-hover table-bordered mb-0" id="tablaSedes">
                             <thead>
-                                <tr>
-                                    <th>Acciones</th>
-                                    <th>identificador sede</th>
-                                    <th>CVE ENT</th>
-                                    <th>CVE DTO</th>
-                                    <th>CVE MPO</th>
-                                    <th>NOMBRE MUNICIPIO</th>
-                                    <th>CVE DE MODULO</th>
-                                    <th>TIPO DE MODULO</th>
-                                    <th>SECCION SEDE</th>
-                                    <th>TIPO SECCION</th>
-                                    <th>CVE LOCALIDAD</th>
-                                    <th>NOMBRE LOCALIDAD</th>
-                                    <th>DIRECCION</th>
-                                    <th>MZ</th>
-                                    <th>CODIGO POSTAL</th>
-                                    <th>REFERENCIAS</th>
-                                    <th>DIAS DE FUNCIONAMIENTO</th>
-                                    <th>HORARIO</th>
-                                    <th>CONFIGURACION</th>
-                                    <th>COORDENADAS</th>
-                                    <th>TURNO MATUTINO</th>
-                                    <th>TURNO VESPERTINO</th>
-                                    <th>X</th>
-                                    <th>Y</th>
+                                <tr id="theadSedesTr">
+                                    <!-- Generado en JS -->
                                 </tr>
                             </thead>
                             <tbody id="tbodySedes">
@@ -328,12 +333,12 @@
         </div>
     </div>
 
-    <!-- Sub Modal Editar Registro (Dentro del Gestor) -->
+    <!-- Sub Modal Editar / Nuevo Registro Sede -->
     <div class="modal fade" id="modalEditarRegistroSede" tabindex="-1" data-bs-backdrop="static">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title fw-bold">Editar Registro de Sede</h5>
+                    <h5 class="modal-title fw-bold" id="modalEditarRegistroTitulo">Formulario de Sede</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -416,7 +421,6 @@
             ["252-1 don martin congregacion", "5", "3", "15", "JUAREZ", "050354", "m", "252", "R", "9", "DON MARTIN CONGREGACION", "CALLE BENITO JUÁREZ S/N LOCALIDAD CONGREGACIÓN DON MARTÍN", "", "1", "25410", "ENTRE LA CALLE RODOLFO ORTIZ Y LA CALLE ERNESTO ZEDILLO UNIDAD DE SALUD IMSS BIENESTAR", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "", "B+2", "", "", "", "-100.618815", "27.527313"]
         ];
 
-        // --- LÓGICA DEL CALENDARIO ---
         const horariosTexto = {
             "050351": "Lunes a Sábado (08:00 AM - 03:00 PM)",
             "050353": "Lunes a Viernes (09:00 AM - 04:00 PM)",
@@ -428,7 +432,8 @@
         let mesActivo = 8; // Septiembre
 
         document.addEventListener('DOMContentLoaded', () => {
-            renderEditorSedes(); // Inicializa el gestor maestro
+            renderHeaderGestor();
+            renderEditorSedes(); 
             actualizarInfoHorario();
             setupMesButtons();
             
@@ -484,19 +489,29 @@
             renderFestivos();
         });
 
-        // --- FUNCIONES GESTOR DE SEDES ---
+        // --- HERRAMIENTAS GESTOR DE SEDES ---
+
+        function renderHeaderGestor() {
+            const tr = document.getElementById('theadSedesTr');
+            tr.innerHTML = `<th>Acciones</th>` + columnasSedes.map(col => `<th>${col}</th>`).join('');
+        }
+
         function renderEditorSedes() {
             const tbody = document.getElementById('tbodySedes');
             tbody.innerHTML = '';
             
+            if(catalogoSedes.length === 0){
+                tbody.innerHTML = `<tr><td colspan="${columnasSedes.length + 1}" class="text-center py-4 text-muted fst-italic">El catálogo está vacío.</td></tr>`;
+                return;
+            }
+
             catalogoSedes.forEach((fila, index) => {
                 let htmlFila = `<tr>`;
                 htmlFila += `
                     <td class="text-center">
-                        <button class="btn btn-sm btn-outline-primary me-1" onclick="abrirEdicionSede(${index})" title="Editar"><i class="fas fa-pencil-alt"></i></button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="eliminarFilaSede(${index})" title="Eliminar"><i class="fas fa-trash-alt"></i></button>
+                        <button class="btn btn-sm btn-outline-primary me-1 mb-1" onclick="abrirEdicionSede(${index})" title="Editar"><i class="fas fa-pencil-alt"></i></button>
+                        <button class="btn btn-sm btn-outline-danger mb-1" onclick="eliminarFilaSede(${index})" title="Eliminar"><i class="fas fa-trash-alt"></i></button>
                     </td>`;
-                
                 fila.forEach(celda => { htmlFila += `<td>${celda}</td>`; });
                 htmlFila += `</tr>`;
                 tbody.innerHTML += htmlFila;
@@ -508,7 +523,16 @@
             const camposContainer = document.getElementById('formCamposSede');
             camposContainer.innerHTML = '';
             
-            const datos = catalogoSedes[index];
+            let datos = [];
+            if (index === -1) {
+                // Nuevo Registro (llenar arreglo vacío)
+                document.getElementById('modalEditarRegistroTitulo').innerText = "Nuevo Registro de Sede";
+                for(let i=0; i<columnasSedes.length; i++) datos.push("");
+            } else {
+                // Editar existente
+                document.getElementById('modalEditarRegistroTitulo').innerText = "Editar Registro de Sede";
+                datos = catalogoSedes[index];
+            }
             
             columnasSedes.forEach((columna, colIndex) => {
                 const valor = datos[colIndex];
@@ -526,17 +550,21 @@
         };
 
         window.guardarEdicionSede = function() {
-            const index = document.getElementById('editIndexSede').value;
+            const index = parseInt(document.getElementById('editIndexSede').value);
             let nuevaFila = [];
             columnasSedes.forEach((_, colIndex) => {
                 nuevaFila.push(document.getElementById(`inputColSede_${colIndex}`).value);
             });
-            catalogoSedes[index] = nuevaFila;
+            
+            if (index === -1) {
+                catalogoSedes.push(nuevaFila);
+            } else {
+                catalogoSedes[index] = nuevaFila;
+            }
             
             const modal = bootstrap.Modal.getInstance(document.getElementById('modalEditarRegistroSede'));
             modal.hide();
-            
-            renderEditorSedes(); // Actualiza tabla
+            renderEditorSedes(); 
         };
 
         window.eliminarFilaSede = function(index) {
@@ -544,6 +572,66 @@
                 catalogoSedes.splice(index, 1);
                 renderEditorSedes();
             }
+        };
+
+        window.borrarTodoCatalogo = function() {
+            if(confirm("¡ATENCIÓN! ¿Estás seguro de borrar TODOS los registros del catálogo? Esta acción vaciará la tabla.")) {
+                catalogoSedes = [];
+                renderEditorSedes();
+            }
+        };
+
+        window.exportarCSV = function() {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += columnasSedes.join(",") + "\n";
+            catalogoSedes.forEach(row => {
+                let rowSanitized = row.map(v => `"${v}"`).join(",");
+                csvContent += rowSanitized + "\n";
+            });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "catalogo_sedes_respaldo.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+
+        window.importarCSV = function() {
+            const fileInput = document.getElementById('inputCsvUpload');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert("Por favor, selecciona un archivo .csv primero.");
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                const rows = content.split('\n');
+                if(rows.length > 1) {
+                    if(confirm("¿Deseas reemplazar el catálogo actual con este archivo? (Aceptar = Reemplazar, Cancelar = Solo agregar)")) {
+                        catalogoSedes = [];
+                    }
+                    // Ignorar la cabecera (index 0) y líneas vacías
+                    for(let i=1; i<rows.length; i++){
+                        if(rows[i].trim() !== ""){
+                            // Parseo simple de CSV (considerando comillas dobles si las hay)
+                            let valores = rows[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+                            if(valores){
+                                valores = valores.map(v => v.replace(/^"|"$/g, ''));
+                                // Asegurar que tenga la misma longitud que las columnas
+                                while(valores.length < columnasSedes.length) valores.push("");
+                                catalogoSedes.push(valores.slice(0, columnasSedes.length));
+                            }
+                        }
+                    }
+                    renderEditorSedes();
+                    alert("Importación completada.");
+                    fileInput.value = "";
+                }
+            };
+            reader.readAsText(file);
         };
 
         // --- FUNCIONES CALENDARIO ---
@@ -563,13 +651,6 @@
             `).join('');
         }
 
-        window.eliminarFestivo = function(fecha) {
-            diasFestivos = diasFestivos.filter(item => item !== fecha);
-            renderFestivos();
-            renderCalendar();
-            actualizarResumen();
-        }
-
         function setupMesButtons() {
             const buttons = document.querySelectorAll('#mesSelectorBtns button');
             buttons.forEach((btn) => {
@@ -583,7 +664,6 @@
         }
 
         function obtenerSedesPorModulo(moduloCVE) {
-            // Filtra dinámicamente desde el catalogoSedes (Columna 5 es CVE DE MODULO)
             return catalogoSedes.filter(fila => fila[5] === moduloCVE);
         }
 
@@ -624,7 +704,6 @@
                     cell.className = 'calendar-cell disabled';
                 }
 
-                // Autorellenar Módulo Fijo (050351) por defecto con el primer registro que coincida en el catálogo
                 if (moduloActual === "050351" && !esDomingoFijo && !isFestivo && !dbRegistros[dbKey]) {
                     const sedesFijo = obtenerSedesPorModulo("050351");
                     if(sedesFijo.length > 0){
@@ -639,7 +718,6 @@
                 } else if (esFinDeSemanaMovil || esDomingoFijo) {
                     contenidoHtml += `<span class="text-muted fst-italic" style="font-size:0.7rem;">Sin Asignar</span>`;
                 } else if (dbRegistros[dbKey] && dbRegistros[dbKey].identificadorSede) {
-                    // Extraer nombre de la localidad para visualización rápida (Columna 10)
                     const idSede = dbRegistros[dbKey].identificadorSede;
                     const sedeData = catalogoSedes.find(s => s[0] === idSede);
                     const sedeVisual = sedeData ? sedeData[10] : idSede; 
@@ -667,15 +745,14 @@
             selectSede.innerHTML = '';
             const dbKey = `${moduloActual}_${fechaStr.replace(/-/g, '_')}`;
 
-            // Obtener sedes dinámicas del catálogo para este módulo
             const sedesDisponibles = obtenerSedesPorModulo(moduloActual);
 
             sedesDisponibles.forEach(sedeData => {
-                const idSede = sedeData[0]; // identificador sede
-                const nombreSede = sedeData[10]; // NOMBRE LOCALIDAD
+                const idSede = sedeData[0]; 
+                const nombreSede = sedeData[10]; 
                 const opt = document.createElement('option');
                 opt.value = idSede;
-                opt.textContent = nombreSede; // Mostrar solo el nombre
+                opt.textContent = nombreSede; 
                 if (dbRegistros[dbKey] && dbRegistros[dbKey].identificadorSede === idSede) {
                     opt.selected = true;
                 }
