@@ -37,7 +37,7 @@
             background: #ffffff;
             border: 1px solid #dee2e6;
             border-radius: 6px;
-            min-height: 90px;
+            min-height: 95px;
             padding: 6px;
             cursor: pointer;
             transition: all 0.2s;
@@ -52,19 +52,25 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
         .calendar-cell.disabled {
-            background-color: #e9ecef;
+            background-color: #ffffff;
             color: #adb5bd;
             cursor: not-allowed;
+            border: 1px dashed #dee2e6;
         }
         .calendar-cell.festive {
             background-color: #ffe3e3;
             border-color: #ff8787;
         }
         
-        /* Colores tenues por Módulo */
-        .theme-050351 { background-color: #e7f1ff !important; border-color: #b6d4fe !important; }
-        .theme-050353 { background-color: #fff3cd !important; border-color: #ffeeba !important; }
-        .theme-050354 { background-color: #d1e7dd !important; border-color: #a3cfbb !important; }
+        /* Fondos tenues por Módulo */
+        .theme-050351 { background-color: #f0f7ff !important; border-color: #cfe2ff !important; } 
+        .theme-050353 { background-color: #fff9e6 !important; border-color: #ffe8a1 !important; } 
+        .theme-050354 { background-color: #e8f5e9 !important; border-color: #c8e6c9 !important; } 
+
+        /* Insignias de sedes con colores intensos personalizados por Módulo (¡Sin negros!) */
+        .badge-sede-050351 { background-color: #0d6efd !important; color: #ffffff !important; }
+        .badge-sede-050353 { background-color: #fd7e14 !important; color: #ffffff !important; }
+        .badge-sede-050354 { background-color: #198754 !important; color: #ffffff !important; }
 
         .day-number {
             font-weight: bold;
@@ -75,6 +81,8 @@
             white-space: normal;
             word-break: break-word;
             text-align: left;
+            padding: 5px;
+            border-radius: 4px;
         }
         .horario-info {
             font-size: 0.8rem;
@@ -91,7 +99,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
         <div class="container-fluid">
             <a class="navbar-brand" href="#"><i class="fas fa-id-card me-2"></i>Directorio MACs (Cloud)</a>
-            <span class="navbar-text text-light small">Versión 11.0 - Firebase Integrado</span>
+            <span class="navbar-text text-light small">Versión 11.0 - Firebase Sincronizado</span>
         </div>
     </nav>
 
@@ -125,15 +133,21 @@
             </div>
 
             <div class="col-md-4">
-                <div class="card card-custom p-3 h-100">
-                    <label class="form-label fw-bold text-danger"><i class="fas fa-ban me-1"></i> Días Festivos / Inhábiles</label>
-                    <div class="input-group input-group-sm mb-2">
-                        <input type="date" id="inputFestivo" class="form-control">
-                        <button class="btn btn-outline-danger" type="button" id="btnAgregarFestivo">Agregar</button>
+                <div class="card card-custom p-3 h-100 d-flex flex-column justify-content-between">
+                    <div>
+                        <label class="form-label fw-bold text-danger"><i class="fas fa-ban me-1"></i> Días Festivos / Inhábiles</label>
+                        <div class="input-group input-group-sm mb-2">
+                            <input type="date" id="inputFestivo" class="form-control">
+                            <button class="btn btn-outline-danger" type="button" id="btnAgregarFestivo">Agregar</button>
+                        </div>
+                        <div style="max-height: 70px; overflow-y: auto;" id="listaFestivos" class="border rounded p-1 bg-light small mb-2">
+                            <span class="text-muted fst-italic">Sin días festivos registrados.</span>
+                        </div>
                     </div>
-                    <div style="max-height: 90px; overflow-y: auto;" id="listaFestivos" class="border rounded p-1 bg-light small">
-                        <span class="text-muted fst-italic">Sin días festivos registrados.</span>
-                    </div>
+                    <!-- Botón Listado de Sedes -->
+                    <button class="btn btn-outline-dark btn-sm w-100 fw-bold" data-bs-toggle="modal" data-bs-target="#modalListadoSedes">
+                        <i class="fas fa-list-ul me-1"></i> Listado de Sedes y Totales
+                    </button>
                 </div>
             </div>
 
@@ -175,7 +189,7 @@
         <!-- Tabla Resumen por Sede (Base de Datos) -->
         <div class="card card-custom">
             <div class="card-header bg-white py-3">
-                <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-table me-2 text-success"></i>Resumen de Días por Sede (Base de Datos)</h5>
+                <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-table me-2 text-success"></i>Resumen de Días por Sede (Módulo Seleccionado)</h5>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -190,7 +204,7 @@
                         </thead>
                         <tbody id="tablaResumenSedes">
                             <tr>
-                                <td colspan="4" class="text-center text-muted py-3">Aún no hay días asignados en el calendario.</td>
+                                <td colspan="4" class="text-center text-muted py-3">Aún no hay días asignados para este módulo.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -223,15 +237,47 @@
         </div>
     </div>
 
+    <!-- Modal Listado General de Sedes -->
+    <div class="modal fade" id="modalListadoSedes" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-list-ul me-2"></i>Listado General de Sedes y Asignaciones</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped align-middle">
+                            <thead class="table-secondary">
+                                <tr>
+                                    <th>Módulo MAC</th>
+                                    <th>Sede / Ubicación</th>
+                                    <th class="text-center">Días Asignados</th>
+                                    <th>Fechas</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaModalListadoSedes">
+                                <!-- Generado dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- Firebase SDK (Modular) -->
+    <!-- Firebase SDK & Lógica -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
-        // CONFIGURACIÓN DE FIREBASE (Reemplaza con tus credenciales de proyecto)
+        // CREDENCIALES FIREBASE REALTIME DATABASE (sistema-mac-reportes)
         const firebaseConfig = {
             apiKey: "AIzaSyA6jvnsXZwF2anOJo3VadfNvn7Fl6Z5efY",
             authDomain: "sistema-mac-reportes.firebaseapp.com",
@@ -242,9 +288,8 @@
             appId: "1:776250701305:web:ac542564b7f7a136cef928"
         };
 
-        // Inicializar Firebase
         const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        const database = getDatabase(app);
 
         // Sedes según Módulo
         const sedesPorModulo = {
@@ -265,10 +310,16 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             actualizarInfoHorario();
-            renderFestivos();
             setupMesButtons();
-            renderCalendar();
-            actualizarResumen();
+            
+            // Escuchar cambios en tiempo real desde Firebase Realtime Database
+            const registrosRef = ref(database, 'directorioMACs');
+            onValue(registrosRef, (snapshot) => {
+                const data = snapshot.val();
+                dbRegistros = data ? data : {};
+                renderCalendar();
+                actualizarResumen();
+            });
 
             document.getElementById('selectModulo').addEventListener('change', () => {
                 actualizarInfoHorario();
@@ -293,14 +344,17 @@
                 const sede = document.getElementById('selectSedeModal').value;
                 const modulo = document.getElementById('selectModulo').value;
 
+                const dbKey = fecha.replace(/-/g, '_');
+
                 if (sede === "Festivo") {
                     if (!diasFestivos.includes(fecha)) diasFestivos.push(fecha);
-                    delete dbRegistros[fecha];
+                    delete dbRegistros[dbKey];
+                    await set(ref(database, 'directorioMACs/' + dbKey), null);
                 } else {
-                    dbRegistros[fecha] = { modulo, fecha, sede };
-                    // Guardar en Firestore Firebase
+                    const nuevoRegistro = { modulo, fecha, sede };
+                    dbRegistros[dbKey] = nuevoRegistro;
                     try {
-                        await setDoc(doc(db, "directorioMACs", fecha), { modulo, fecha, sede });
+                        await set(ref(database, 'directorioMACs/' + dbKey), nuevoRegistro);
                     } catch (e) {
                         console.error("Error al guardar en Firebase:", e);
                     }
@@ -313,6 +367,11 @@
                 renderCalendar();
                 actualizarResumen();
             });
+
+            // Actualizar modal de listado general cuando se abra
+            document.getElementById('modalListadoSedes').addEventListener('show.bs.modal', actualizarModalListadoSedes);
+
+            renderFestivos();
         });
 
         function actualizarInfoHorario() {
@@ -372,6 +431,7 @@
                 const mesStr = String(mes + 1).padStart(2, '0');
                 const diaStr = String(dia).padStart(2, '0');
                 const fechaStr = `${anio}-${mesStr}-${diaStr}`;
+                const dbKey = fechaStr.replace(/-/g, '_');
                 const diaSemana = new Date(anio, mes, dia).getDay(); // 0: Dom, 6: Sáb
 
                 const cell = document.createElement('div');
@@ -387,29 +447,27 @@
                     cell.className = 'calendar-cell disabled';
                 }
 
-                // Autorellenar Módulo Fijo (050351) de lunes a sábado por defecto si no existe
-                if (moduloActual === "050351" && !esDomingoFijo && !isFestivo && !dbRegistros[fechaStr]) {
-                    dbRegistros[fechaStr] = { modulo: "050351", fecha: fechaStr, sede: "Módulo Fijo Monclova" };
+                // Autorellenar Módulo Fijo (050351) por defecto de lunes a sábado si no existe registro previo
+                if (moduloActual === "050351" && !esDomingoFijo && !isFestivo && !dbRegistros[dbKey]) {
+                    dbRegistros[dbKey] = { modulo: "050351", fecha: fechaStr, sede: "Módulo Fijo Monclova" };
                 }
 
                 let contenidoHtml = `<div class="day-number">${dia}</div>`;
                 
                 if (isFestivo) {
                     contenidoHtml += `<span class="badge bg-danger badge-sede mt-1">Festivo / Inhábil</span>`;
-                } else if (esFinDeSemanaMovil) {
-                    contenidoHtml += `<span class="badge bg-secondary badge-sede mt-1">Inactivo (Fin de semana)</span>`;
-                } else if (esDomingoFijo) {
-                    contenidoHtml += `<span class="badge bg-secondary badge-sede mt-1">Inactivo (Dom)</span>`;
-                } else if (dbRegistros[fechaStr]) {
-                    const sedeActual = dbRegistros[fechaStr].sede;
-                    contenidoHtml += `<span class="badge bg-dark badge-sede mt-1 text-white">${sedeActual}</span>`;
+                } else if (esFinDeSemanaMovil || esDomingoFijo) {
+                    contenidoHtml += `<span class="text-muted fst-italic" style="font-size:0.7rem;">Sin Asignar</span>`;
+                } else if (dbRegistros[dbKey] && dbRegistros[dbKey].modulo === moduloActual && dbRegistros[dbKey].sede) {
+                    const sedeActual = dbRegistros[dbKey].sede;
+                    contenidoHtml += `<span class="badge badge-sede badge-sede-${moduloActual} mt-1 shadow-sm fw-bold">${sedeActual}</span>`;
                 } else {
-                    contenidoHtml += `<span class="text-primary fw-semibold fst-italic" style="font-size:0.7rem;"><i class="fas fa-plus-circle me-1"></i>Selecciona la Sede</span>`;
+                    contenidoHtml += `<span class="text-primary fw-bold fst-italic" style="font-size:0.75rem;"><i class="fas fa-plus-circle me-1"></i>Escojase la Sede</span>`;
                 }
 
                 cell.innerHTML = contenidoHtml;
 
-                // Evento clic para abrir modal
+                // Evento clic para abrir modal (solo si es día laboral y no festivo)
                 if (!isFestivo && !esFinDeSemanaMovil && !esDomingoFijo) {
                     cell.addEventListener('click', () => abrirModalSede(fechaStr));
                 }
@@ -425,12 +483,13 @@
             const moduloActual = document.getElementById('selectModulo').value;
             const selectSede = document.getElementById('selectSedeModal');
             selectSede.innerHTML = '';
+            const dbKey = fechaStr.replace(/-/g, '_');
 
             sedesPorModulo[moduloActual].forEach(sede => {
                 const opt = document.createElement('option');
                 opt.value = sede;
                 opt.textContent = sede;
-                if (dbRegistros[fechaStr] && dbRegistros[fechaStr].sede === sede) {
+                if (dbRegistros[dbKey] && dbRegistros[dbKey].modulo === moduloActual && dbRegistros[dbKey].sede === sede) {
                     opt.selected = true;
                 }
                 selectSede.appendChild(opt);
@@ -441,6 +500,7 @@
         }
 
         function actualizarResumen() {
+            const moduloActual = document.getElementById('selectModulo').value;
             const tbody = document.getElementById('tablaResumenSedes');
             tbody.innerHTML = '';
 
@@ -448,7 +508,7 @@
             let totalTrabajados = 0;
 
             Object.values(dbRegistros).forEach(reg => {
-                if (reg.sede && reg.sede !== "Festivo") {
+                if (reg && reg.modulo === moduloActual && reg.sede && reg.sede !== "Festivo") {
                     totalTrabajados++;
                     if (!conteoPorSede[reg.sede]) {
                         conteoPorSede[reg.sede] = { modulo: reg.modulo, fechas: [] };
@@ -461,19 +521,59 @@
 
             const sedesKeys = Object.keys(conteoPorSede);
             if (sedesKeys.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-3">Aún no hay días asignados en el calendario.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-3">Aún no hay días asignados para este módulo.</td></tr>`;
                 return;
             }
 
             sedesKeys.forEach(sede => {
                 const datos = conteoPorSede[sede];
                 datos.fechas.sort();
+                const badgeColorClass = `badge-sede-${moduloActual}`;
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td><span class="badge bg-secondary">${datos.modulo}</span></td>
                     <td class="fw-bold">${sede}</td>
-                    <td class="text-center"><span class="badge bg-primary rounded-pill px-3">${datos.fechas.length} días</span></td>
+                    <td class="text-center"><span class="badge ${badgeColorClass} rounded-pill px-3">${datos.fechas.length} días</span></td>
                     <td class="small text-muted">${datos.fechas.join(', ')}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function actualizarModalListadoSedes() {
+            const tbody = document.getElementById('tablaModalListadoSedes');
+            tbody.innerHTML = '';
+
+            let conteoGeneral = {};
+
+            // Inicializar todas las sedes posibles de todos los módulos con 0 días
+            Object.keys(sedesPorModulo).forEach(mod => {
+                sedesPorModulo[mod].forEach(sede => {
+                    if (sede !== "Festivo") {
+                        const key = `${mod}_${sede}`;
+                        conteoGeneral[key] = { modulo: mod, sede: sede, fechas: [] };
+                    }
+                });
+            });
+
+            // Contar registros reales de Firebase
+            Object.values(dbRegistros).forEach(reg => {
+                if (reg && reg.modulo && reg.sede && reg.sede !== "Festivo") {
+                    const key = `${reg.modulo}_${reg.sede}`;
+                    if (conteoGeneral[key]) {
+                        conteoGeneral[key].fechas.push(reg.fecha);
+                    }
+                }
+            });
+
+            Object.values(conteoGeneral).forEach(item => {
+                item.fechas.sort();
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><span class="badge bg-secondary">${item.modulo}</span></td>
+                    <td class="fw-bold">${item.sede}</td>
+                    <td class="text-center"><span class="badge bg-primary rounded-pill px-3">${item.fechas.length} días</span></td>
+                    <td class="small text-muted">${item.fechas.length > 0 ? item.fechas.join(', ') : '<span class="fst-italic text-muted">Sin días asignados</span>'}</td>
                 `;
                 tbody.appendChild(tr);
             });
