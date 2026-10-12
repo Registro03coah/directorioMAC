@@ -67,7 +67,6 @@
         .theme-050353 { background-color: #fff9e6 !important; border-color: #ffe8a1 !important; } 
         .theme-050354 { background-color: #e8f5e9 !important; border-color: #c8e6c9 !important; } 
 
-        /* Insignias de sedes con colores intensos personalizados por Módulo */
         .badge-sede-050351 { background-color: #0d6efd !important; color: #ffffff !important; }
         .badge-sede-050353 { background-color: #fd7e14 !important; color: #ffffff !important; }
         .badge-sede-050354 { background-color: #198754 !important; color: #ffffff !important; }
@@ -92,12 +91,19 @@
             border-radius: 5px;
         }
 
-        /* Estilos Editor Sedes */
-        #modalGestorSedes th { background-color: #1b396b !important; color: white !important; white-space: nowrap; font-size: 0.8rem; padding: 10px;}
+        /* Estilos Tablas y Gestor */
+        #modalGestorSedes th, #tablaVaciadoFinal th { background-color: #880e4f !important; color: white !important; white-space: nowrap; font-size: 0.75rem; padding: 8px; text-align: center; }
+        #tablaVaciadoFinal td { vertical-align: middle; white-space: nowrap; font-size: 0.75rem; padding: 6px; }
+        
+        #modalGestorSedes th { background-color: #1b396b !important; }
         #modalGestorSedes td { vertical-align: middle; white-space: nowrap; max-width: 180px; overflow: hidden; text-overflow: ellipsis; font-size: 0.8rem; padding: 8px;}
         #modalGestorSedes td:hover { white-space: normal; word-break: break-word; overflow: visible; background-color: #f8f9fa; z-index: 10; position: relative;}
+        
         .table-gestor-wrapper { max-height: calc(100vh - 200px); overflow-y: auto; overflow-x: auto; }
         .toolbar-gestor { background-color: #f1f3f5; border-radius: 8px; padding: 10px; margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap; }
+        
+        .view-section { display: none; }
+        .view-section.active { display: block; }
     </style>
 </head>
 <body>
@@ -107,15 +113,49 @@
         <div class="container-fluid">
             <a class="navbar-brand" href="#"><i class="fas fa-id-card me-2"></i>Directorio MACs (Cloud)</a>
             <div class="d-flex align-items-center">
-                <span class="navbar-text text-light small me-3 d-none d-md-block">Versión 11.9 - Identificador de Sede por Módulo</span>
-                <button class="btn btn-warning btn-sm fw-bold shadow-sm" type="button" data-bs-toggle="modal" data-bs-target="#modalGestorSedes">
+                <span class="navbar-text text-light small me-3 d-none d-md-block">Versión 12.0 - Vaciado Final Automático</span>
+                <button class="btn btn-warning btn-sm fw-bold shadow-sm me-2" type="button" data-bs-toggle="modal" data-bs-target="#modalGestorSedes">
                     <i class="fas fa-edit me-1"></i> Editor Sedes
                 </button>
             </div>
         </div>
     </nav>
 
-    <div class="container my-4">
+    <!-- PANTALLA 1: SELECTOR DE VISTA (HOME) -->
+    <div id="vistaSelector" class="container my-5 view-section active">
+        <div class="row justify-content-center">
+            <div class="col-md-8 text-center">
+                <div class="card card-custom p-5 bg-white">
+                    <h2 class="fw-bold text-dark mb-3"><i class="fas fa-cubes text-primary me-2"></i>Sistema de Control Operativo</h2>
+                    <p class="text-muted mb-4">Seleccione el módulo o apartado al que desea ingresar:</p>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="card card-custom p-4 h-100 border border-primary text-center bg-light cursor-pointer" onclick="cambiarVista('calendario')">
+                                <i class="fas fa-calendar-alt fa-3x text-primary mb-3"></i>
+                                <h4 class="fw-bold text-dark">Calendario Operativo</h4>
+                                <p class="small text-muted mb-0">Gestión y asignación diaria de sedes por módulo y días festivos.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card card-custom p-4 h-100 border border-success text-center bg-light cursor-pointer" onclick="cambiarVista('vaciado')">
+                                <i class="fas fa-file-excel fa-3x text-success mb-3"></i>
+                                <h4 class="fw-bold text-dark">Vaciado Final</h4>
+                                <p class="small text-muted mb-0">Generación automática de la tabla oficial de 21 columnas por bloques.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANTALLA 2: CALENDARIO OPERATIVO -->
+    <div id="vistaCalendario" class="container my-4 view-section">
+        <div class="mb-3">
+            <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="cambiarVista('selector')">
+                <i class="fas fa-arrow-left me-1"></i> Regresar al Menú Principal
+            </button>
+        </div>
         
         <!-- Panel de Configuración General -->
         <div class="row g-3 mb-4">
@@ -223,6 +263,36 @@
         </div>
     </div>
 
+    <!-- PANTALLA 3: VACIADO FINAL -->
+    <div id="vistaVaciado" class="container-fluid my-4 view-section px-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="cambiarVista('selector')">
+                <i class="fas fa-arrow-left me-1"></i> Regresar al Menú Principal
+            </button>
+            <h3 class="fw-bold text-dark mb-0"><i class="fas fa-file-excel text-success me-2"></i>Tabla de Vaciado Final (Oficial)</h3>
+            <button class="btn btn-success btn-sm fw-bold" onclick="exportarVaciadoCSV()">
+                <i class="fas fa-download me-1"></i> Descargar Vaciado CSV
+            </button>
+        </div>
+
+        <div class="card card-custom">
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 75vh;">
+                    <table class="table table-bordered table-striped mb-0" id="tablaVaciadoFinal">
+                        <thead>
+                            <tr id="theadVaciadoTr">
+                                <!-- Generado por JS -->
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyVaciado">
+                            <!-- Generado por JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal para Asignar Sede a un Día -->
     <div class="modal fade" id="modalAsignarSede" tabindex="-1">
         <div class="modal-dialog">
@@ -287,38 +357,29 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body bg-light">
-                    <!-- Barra de Herramientas -->
                     <div class="toolbar-gestor shadow-sm">
                         <button class="btn btn-success btn-sm fw-bold" onclick="abrirEdicionSede(-1)">
                             <i class="fas fa-plus-circle me-1"></i> Nuevo Registro
                         </button>
-                        
                         <button class="btn btn-primary btn-sm fw-bold" onclick="exportarCSV()">
                             <i class="fas fa-download me-1"></i> Respaldo (.csv)
                         </button>
-                        
                         <div class="d-flex align-items-center border-start border-end px-3">
                             <input class="form-control form-control-sm me-2" type="file" id="inputCsvUpload" accept=".csv" style="max-width: 250px;">
                             <button class="btn btn-secondary btn-sm fw-bold" onclick="importarCSV()">
                                 <i class="fas fa-upload me-1"></i> Subir Excel
                             </button>
                         </div>
-                        
                         <button class="btn btn-danger btn-sm fw-bold ms-auto" onclick="borrarTodoCatalogo()">
                             <i class="fas fa-trash-alt me-1"></i> Borrar Todo
                         </button>
                     </div>
-
                     <div class="table-gestor-wrapper bg-white shadow-sm border rounded">
                         <table class="table table-hover table-bordered mb-0" id="tablaSedes">
                             <thead>
-                                <tr id="theadSedesTr">
-                                    <!-- Generado en JS -->
-                                </tr>
+                                <tr id="theadSedesTr"></tr>
                             </thead>
-                            <tbody id="tbodySedes">
-                                <!-- Generado dinámicamente -->
-                            </tbody>
+                            <tbody id="tbodySedes"></tbody>
                         </table>
                     </div>
                 </div>
@@ -326,7 +387,7 @@
         </div>
     </div>
 
-    <!-- Sub Modal Editar / Nuevo Registro Sede -->
+    <!-- Sub Modal Editar Sede -->
     <div class="modal fade" id="modalEditarRegistroSede" tabindex="-1" data-bs-backdrop="static">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
@@ -336,9 +397,7 @@
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="editIndexSede">
-                    <div class="row g-2" id="formCamposSede">
-                        <!-- Generado dinámicamente -->
-                    </div>
+                    <div class="row g-2" id="formCamposSede"></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -351,12 +410,11 @@
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- LÓGICA UNIFICADA (Firebase + Calendario + Gestor Sedes) -->
+    <!-- LÓGICA PRINCIPAL -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
-        // CONFIGURACIÓN FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyA6jvnsXZwF2anOJo3VadfNvn7Fl6Z5efY",
             authDomain: "sistema-mac-reportes.firebaseapp.com",
@@ -369,7 +427,7 @@
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
 
-        // --- BASE DE DATOS DE SEDES (19 Columnas exactas) ---
+        // Columnas del Catálogo de Sedes (19)
         const columnasSedes = [
             "identificador sede", "CVE ENT", "CVE DTO", "CVE MPO", "NOMBRE MUNICIPIO", "CVE DE MODULO", 
             "TIPO DE MODULO", "SECCION SEDE", "TIPO SECCION", "CVE LOCALIDAD", "NOMBRE LOCALIDAD", 
@@ -382,37 +440,19 @@
             ["Monclova TV", "5", "3", "18", "MONCLOVA", "050351", "F", "380", "U", "1", "MONCLOVA", "CALLE GUERRERO 101 ZONA CENTRO", "", "225700", "ENTRE LA CALLE VENUSTIANO CARRANZA Y CALLE DE LA FUENTE", "LUN A VIER DE 08:00 a. m. A 03:00 p. m.;  SAB DE 09:00 a. m. A 04:00 p. m.;  DOM DE 09:00 a. m. A 04:00 p. m.", "B+5", "-101.41806", "26.90143"],
             ["Monclova TM", "5", "3", "18", "MONCLOVA", "050351", "F", "380", "U", "1", "MONCLOVA", "CALLE GUERRERO 101 ZONA CENTRO", "", "225700", "ENTRE LA CALLE VENUSTIANO CARRANZA Y CALLE DE LA FUENTE", "LUN A VIER DE 08:00 a. m. A 03:00 p. m.;", "B+5", "-101.41806", "26.90143"],
             ["701-31 sabinas", "5", "3", "28", "SABINAS", "050353", "S", "701", "U", "1", "SABINAS", "CALLE CUAUHTÉMOC S/N COLONIA CENTENARIO", "", "3126750", "ESQUINA CON CALLE INDEPENDENCIA ESCUELA DE MÚSICA", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+3", "-101.11192", "27.85518"],
-            ["1066-16 nueva rosita", "5", "3", "32", "SAN JUAN DE SABINAS", "050353", "S", "1066", "U", "1", "NUEVA ROSITA", "AVENIDA PRESIDENTE JUÁREZ S/N COLONIA SARABIA", "", "1626830", "ENTRE CALLE CUARTEL Y CALLE GENERAL FRANCISCO MURGUÍA CASA DE LA CULTURA MARÍA DEL PILAR TIJERINA DE GUADIANA", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+3", "-101.21436", "27.94517"],
+            ["1066-16 nueva rosita", "5", "3", "32", "SAN JUAN DE SABINAS", "050353", "S", "1066", "U", "1", "NUEVA ROSITA", "AVENIDA PRESIDENTE JUÁREZ S/N COLONIA SARABIA", "", "1626830", "ENTRE CALLE CUARTEL Y CALLE GENERAL FRANCISCO MURGUÍA CASA DE LA CULTURA", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+3", "-101.21436", "27.94517"],
             ["52-9 allende", "5", "3", "3", "ALLENDE", "050353", "S", "52", "U", "1", "ALLENDE", "CALLE INDEPENDENCIA 504 ORIENTE ZONA CENTRO", "", "926530", "ENTRE LA  CALLE 16 DE SEPTIEMBRE Y CALLE MARIANO ESCOBEDO DIF MUNICIPAL", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+3", "-100.84554", "28.33979"],
-            ["52-19 allende1", "5", "3", "3", "ALLENDE", "050353", "S", "52", "U", "1", "ALLENDE1", "CALLE BENITO JUÁREZ 407 NORTE ZONA CENTRO", "", "1926530", "ENTRE CALLE SIMÓN BOLIVAR Y CALLE CUAUHTEMOC CASA DE LA CULTURA", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+3", "-100851984", "28346179"],
             ["1499-52 villaunion", "5", "3", "37", "VILLA UNION", "050353", "S", "1499", "U", "1", "VILLAUNION", "CALLE LÁZARO CÁRDENAS 300 ZONA CENTRO", "", "5226600", "ENTRE LA  CALLE IGNACIO LÓPEZ RAYÓN Y CALLE CUAUHTÉMOC DIF MUNICIPAL", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+3", "-100.71971", "28.22042"],
-            ["717-24 cloete", "5", "3", "28", "SABINAS", "050353", "S", "717", "M", "3", "CLOETE", "CALLE VENUSTIANO CARRANZA 783 LOCALIDAD CLOETE", "", "2426700", "ENTRE LA CALLE FRANCISCO SARABIA Y CALLE BENITO JUÁREZ DIF MUNICIPAL", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+3", "-101.17836", "27.92441"],
-            ["721-81 agujita", "5", "3", "28", "SABINAS", "050353", "S", "721", "U", "2", "AGUJITA", "CALLE DÁVILA MONCADA 22 COLONIA ZONA CENTRO", "", "8126950", "ENTRE LA CALZADA DEL DOS Y CALLE BARRIO 4 CENTRO COMUNITARIO", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+3", "-101.15793", "27.89568"],
-            ["233-54 guerrero", "5", "3", "12", "GUERRERO", "050353", "S", "233", "M", "1", "GUERRERO", "CALLE LICENCIADO RAÚL LÓPEZ SÁNCHEZ S/N ZONA CENTRO", "", "5426640", "ENTRE LA CALLE RAMOS ARIZPE Y CALLE 5 DE MAYO DIF MUNICIPAL", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+3", "-100.37963", "28.30896"],
-            ["239-5 hidalgo", "5", "3", "13", "HIDALGO", "050353", "S", "239", "M", "1", "HIDALGO", "CALLE ÓSCAR FLORES TAPIA S/N COLONIA ZONA CENTRO", "", "526370", "ENTRE LA CALLE LAREDO Y CALLE ZARAGOZA DIF MUNICIPAL", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+3", "-99.87571", "27.78931"],
             ["88-22 castaños", "5", "3", "6", "CASTAÑOS", "050354", "M", "88", "U", "1", "CASTAÑOS", "CALLE MORELOS S/N COLONIA ZONA CENTRO", "", "2225870", "ENTRE LA CALLE OCAMPO Y CALLE ESCOBEDO CASA DE LA CULTURA", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+2", "-101.42839", "26.78652"],
-            ["1-23 abasolo", "5", "3", "1", "ABASOLO", "050354", "M", "1", "M", "1", "ABASOLO", "CALLE HIDALGO S/N COLONIA ZONA CENTRO", "", "2325540", "ENTRE CALLE JOSEFA ORTÍZ DE DOMÍNGUEZ Y CALLE APOLONIO M. AVILÉS DIF MUNICIPAL", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+2", "-101.42664", "27.18206"],
-            ["81-15 candela", "5", "3", "5", "CANDELA", "050354", "M", "81", "M", "1", "CANDELA", "AVENIDA BENITO JUÁREZ S/N LOCALIDAD CANDELA", "", "1525570", "ENTRE LA CALLE GENERAL CEPEDA Y CALLE FRANCISCO I. MADERO CASA DEL ADULTO MAYOR", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+2", "-100.66228", "26.84282"],
-            ["649-19 san jose de aura", "5", "3", "26", "PROGRESO", "050354", "M", "649", "M", "4", "SAN JOSE DE AURA", "CALLE INDEPENDENCIA S/N ZONA CENTRO", "", "1925430", "ENTRE LA CALLE FEDERICO RIOJAS AVILÉS Y CALLE MARIANO ABASOLO DIF MUNICIPAL", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+2", "-101.36978", "27.59137"],
-            ["251-38 juarez", "5", "3", "15", "JUAREZ", "050354", "M", "251", "M", "1", "JUAREZ", "CALLE BENITO JUÁREZ S/N LOCALIDAD JUÁREZ", "", "3825400", "ENTRE AVENIDA LAS FLORES Y CALLE VENUSTIANO CARRANZA CASA DE LA CULTURA", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+2", "-100.72808", "27.60596"],
-            ["130-63 primero de mayo", "5", "3", "8", "ESCOBEDO", "050354", "M", "130", "M", "3", "PRIMERO DE MAYO", "CALLE ÁLVARO OBREGÓN S/N EJIDO PRIMERO DE MAYO", "", "6325470", "SALÓN EJIDAL ENTRE CALLE HIDALGO Y CALLE VENUSTIANO CARRANZA", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+2", "-101.22452", "27.24019"],
-            ["364-23 monclova", "5", "3", "18", "MONCLOVA", "050354", "M", "364", "U", "1", "MONCLOVA", "BOULEVARD SAN JOSÉ 308 SUPER GUTIÉRREZ COLONIA HÉROES DEL 47", "", "2325740", "ENTRE LA CALLE NUEVO LAREDO Y CALLE PURÍSIMA", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+2", "-101.41076", "26.90987"],
-            ["104-14 estacion bajan", "5", "3", "6", "CASTAÑOS", "050354", "M", "104", "R", "7", "ESTACION BAJAN", "CALLE JOSE ISABEL SEPULVEDA LOCALIDAD ESTACION BAJAN", "", "1425896", "ESQUINA CON RAMÓN MORALES TELESECUNDARIA HÉROES DE LA INDEPENDENCIA.", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+2", "-101.255530", "26.531528"],
-            ["108-18 dolores", "5", "3", "6", "CASTAÑOS", "050354", "M", "108", "R", "18", "DOLORES", "CALLE 14 DE SEPTIEMBRE S/N LOCALIDAD EJIDO DOLORES", "", "1825896", "ENTRE LA CALLE 1 DE MAYO Y CALLE ROGELIO MONTEMAYOR SEGUI TELESECUNDARIA EJIDO DOLORES", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+2", "-101.429025", "26.371374"],
-            ["106-18 espinazo", "5", "3", "6", "CASTAÑOS", "050354", "M", "106", "R", "22", "ESPINAZO", "CALLE SOCRATES RIZZO S/N LOCALIDAD ESPINAZO", "", "1825894", "ENTRE LA CALLE ALFONSO MARTINEZ DOMÍNGUEZ Y PLUTARCO ELÍAS CALLES SALÓN EJIDAL", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+2", "-101.108881", "26.264978"],
-            ["97-15 la soledad", "5", "3", "6", "CASTAÑOS", "050354", "M", "97", "R", "68", "LA SOLEDAD", "CALLE BENITO JUÁREZ S/N LOCALIDAD EJIDO LA SOLEDAD", "", "1525877", "ENTRE LA CALLE MORELOS Y CALLE ALDAMA ESCUELA PRIMARIA BENITO JUÁREZ", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+2", "-101.611824", "26.753464"],
-            ["42-22 nuevo poblado el oro (ejido)", "5", "3", "18", "MONCLOVA", "050354", "M", "442", "R", "118", "NUEVO POBLADO EL ORO (EJIDO)", "CALLE SIN NOMBRE S/N LOCALIDAD EJIDO EL ORO", "", "2225844", "ENTRE LA CALLE VICENTE RANGEL Y CALLE SIN NOMBRE ESCUELA PRIMARIA 5 DE FEBRERO", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+2", "-101.17149", "26.554496"],
-            ["45-16 progreso", "5", "3", "26", "PROGRESO", "050354", "M", "645", "M", "1", "PROGRESO", "AVENIDA INDEPENDENCIA S/N ZONA CENTRO", "", "1625420", "ENTRE LA CALLE JOSÉ MARIA MORELOS Y PAVON Y CALLE VICENTE GUERRERO CASA DE LA CULTURA", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+2", "-100.987073", "27.429571"],
-            ["129-13 obayos", "5", "3", "8", "ESCOBEDO", "050354", "M", "129", "R", "2", "OBAYOS", "CALLE ITURBIDE S/N LOCALIDAD OBAYOS", "", "1325480", "ENTRE LA CALLES HIDALGO Y CALLE VIENTE GUERRERO PRIMARIA APOLONIO M AVILÉS", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+2", "-101.365424", "27.438167"],
-            ["650-10 san alberto", "5", "3", "26", "PROGRESO", "050354", "M", "650", "R", "3", "SAN ALBERTO", "EMILIANO ZAPATA S/N ZONA CENTRO PROGRESO", "", "1025440", "ENTRE LA CALLE HUMBERTO MOREIRA Y CALLE FEDERICO QUINTANILLA SALON EJIDAL", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+2", "-101.2950541", "27.443755"],
-            ["1128-10 escobedo", "5", "3", "8", "ESCOBEDO", "050354", "M", "128", "M", "1", "ESCOBEDO", "CALLE COLEGIO MILITAR S/N LOCALIDAD EJIDO ESCOBEDO", "", "1025470", "ENTRE LA CALLE MIGUEL HIDALGO Y CALLE IGNACIO ZARAGOZA DIF MUNICIPAL", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+2", "-101.413671", "27.232668"],
-            ["83-5 el huizachal", "5", "3", "5", "CANDELA", "050354", "M", "83", "R", "14", "EL HUIZACHAL", "CALLE VENUSTIANO CARRANZA S/N LOCALIDAD EL HUZACHAL", "", "525590", "ENTRE LA CALLE FRANCISCO I MADERO  Y AVENIDA REVOLUCIÓN ESCUELA PRIMARIA VENUSTIANO CARRANZA", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+2", "-101.021859", "26.763322"],
-            ["433-49 monclova (praderas)", "5", "3", "18", "MONCLOVA", "050354", "m", "433", "U", "1", "MONCLOVA (PRADERAS)", "VILLA DEL MAR NUMERO 819 COLONIA PRADERAS DEL SUR 3 SECTOR", "", "4925796", "ENTRE LA CALLE VALLE AZUL Y CALLE VALLE DEL LAGO BIBLIOTECA ROTARIO DR. CARLOS CANSECO", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+2", "-101.439908", "26.867079"],
-            ["2-40 los rodriguez", "5", "3", "1", "ABASOLO", "050354", "m", "2", "M", "2", "LOS RODRIGUEZ", "CALLE BENITO JUÁREZ 126  LOCALIDAD LOS RODRIGUEZ COAHUILA", "", "4025550", "ENTRE LA CALLE ZARAGOZA Y CALLE HÉROES DEL 47 DIF MUNICIPAL", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+2", "-101.357588", "27.199861"],
-            ["106-10 la joya", "5", "3", "6", "CASTAÑOS", "050354", "m", "106", "R", "28", "LA JOYA", "CALLE ALLENDE S/N LOCALIDAD LA JOYA", "", "1025890", "ENTRE LA CALLE RUIZ CORTINEZ Y CALLE ADOLFO LOPEZ MATEO ESCUELA RURAL JUSTO SIERRA", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+2", "-101.194088", "26.441080"],
-            ["252-1 don martin congregacion", "5", "3", "15", "JUAREZ", "050354", "m", "252", "R", "9", "DON MARTIN CONGREGACION", "CALLE BENITO JUÁREZ S/N LOCALIDAD CONGREGACIÓN DON MARTÍN", "", "125410", "ENTRE LA CALLE RODOLFO ORTIZ Y LA CALLE ERNESTO ZEDILLO UNIDAD DE SALUD IMSS BIENESTAR", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+2", "-100.618815", "27.527313"],
-            ["52-19 allende", "5", "3", "3", "ALLENDE", "050353", "S", "52", "U", "1", "ALLENDE", "CALLE BENITO JUÁREZ 407 NORTE ZONA CENTRO", "", "1926530", "ENTRE CALLE SIMÓN BOLIVAR Y CALLE CUAUHTEMOC CASA DE LA CULTURA", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+3", "-100851984", "28346179"],
-            ["52-9 allende1", "5", "3", "3", "ALLENDE", "050353", "S", "52", "U", "1", "ALLENDE1", "CALLE INDEPENDENCIA 504 ORIENTE ZONA CENTRO", "", "926530", "ENTRE LA  CALLE 16 DE SEPTIEMBRE Y CALLE MARIANO ESCOBEDO DIF MUNICIPAL", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+3", "-100.84554", "28.33979"]
+            ["1-23 abasolo", "5", "3", "1", "ABASOLO", "050354", "M", "1", "M", "1", "ABASOLO", "CALLE HIDALGO S/N COLONIA ZONA CENTRO", "", "2325540", "ENTRE CALLE JOSEFA ORTÍZ DE DOMÍNGUEZ Y CALLE APOLONIO M. AVILÉS", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+2", "-101.42664", "27.18206"]
+        ];
+
+        // 21 Columnas Oficiales de la Tabla de Vaciado Final
+        const columnasVaciado = [
+            "CVE ENT", "CVE DTO", "CVE MPO", "NOMBRE MUNICIPIO", "CVE DE MÓDULO", "TIPO DE MÓDULO", 
+            "SECCIÓN SEDE", "TIPO SECCIÓN", "CVE LOCALIDAD", "NOMBRE LOCALIDAD", "DIRECCIÓN", "MZ", 
+            "CÓDIGO POSTAL", "REFERENCIAS", "DÍAS inicio", "DÍAS final", "HORARIO", 
+            "TURNO MATUTINO", "TURNO VESPERTINO", "X", "Y"
         ];
 
         const horariosTexto = {
@@ -424,6 +464,20 @@
         let dbRegistros = {};
         let diasFestivos = ["2026-09-16", "2026-11-02", "2026-11-16", "2025-12-25", "2027-01-01"];
         let mesActivo = 8; 
+
+        window.cambiarVista = function(vista) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            if (vista === 'selector') {
+                document.getElementById('vistaSelector').classList.add('active');
+            } else if (vista === 'calendario') {
+                document.getElementById('vistaCalendario').classList.add('active');
+                renderCalendar();
+                actualizarResumen();
+            } else if (vista === 'vaciado') {
+                document.getElementById('vistaVaciado').classList.add('active');
+                renderVaciadoFinal();
+            }
+        };
 
         document.addEventListener('DOMContentLoaded', () => {
             renderHeaderGestor();
@@ -490,12 +544,10 @@
             });
 
             document.getElementById('modalListadoSedes').addEventListener('show.bs.modal', actualizarModalListadoSedes);
-
             renderFestivos();
         });
 
         // --- GESTOR DE SEDES ---
-
         function renderHeaderGestor() {
             const tr = document.getElementById('theadSedesTr');
             tr.innerHTML = `<th>Acciones</th>` + columnasSedes.map(col => `<th>${col}</th>`).join('');
@@ -504,12 +556,6 @@
         function renderEditorSedes() {
             const tbody = document.getElementById('tbodySedes');
             tbody.innerHTML = '';
-            
-            if(catalogoSedes.length === 0){
-                tbody.innerHTML = `<tr><td colspan="${columnasSedes.length + 1}" class="text-center py-4 text-muted fst-italic">El catálogo está vacío.</td></tr>`;
-                return;
-            }
-
             catalogoSedes.forEach((fila, index) => {
                 let htmlFila = `<tr>`;
                 htmlFila += `
@@ -529,125 +575,79 @@
             document.getElementById('editIndexSede').value = index;
             const camposContainer = document.getElementById('formCamposSede');
             camposContainer.innerHTML = '';
+            let datos = index === -1 ? new Array(columnasSedes.length).fill("") : catalogoSedes[index];
             
-            let datos = [];
-            if (index === -1) {
-                document.getElementById('modalEditarRegistroTitulo').innerText = "Nuevo Registro de Sede";
-                for(let i=0; i<columnasSedes.length; i++) datos.push("");
-            } else {
-                document.getElementById('modalEditarRegistroTitulo').innerText = "Editar Registro de Sede";
-                datos = catalogoSedes[index];
-            }
+            document.getElementById('modalEditarRegistroTitulo').innerText = index === -1 ? "Nuevo Registro de Sede" : "Editar Registro de Sede";
             
             columnasSedes.forEach((columna, colIndex) => {
-                const valor = datos[colIndex] !== undefined ? datos[colIndex] : "";
-                const inputHtml = `
+                camposContainer.innerHTML += `
                     <div class="col-md-3 mb-2">
                         <label class="form-label fw-bold text-muted small mb-0">${columna}</label>
-                        <input type="text" class="form-control form-control-sm border-primary" id="inputColSede_${colIndex}" value="${valor}">
-                    </div>
-                `;
-                camposContainer.innerHTML += inputHtml;
+                        <input type="text" class="form-control form-control-sm border-primary" id="inputColSede_${colIndex}" value="${datos[colIndex]}">
+                    </div>`;
             });
-            
-            const modal = new bootstrap.Modal(document.getElementById('modalEditarRegistroSede'));
-            modal.show();
+            new bootstrap.Modal(document.getElementById('modalEditarRegistroSede')).show();
         };
 
         window.guardarEdicionSede = function() {
             const index = parseInt(document.getElementById('editIndexSede').value);
             let nuevaFila = [];
-            columnasSedes.forEach((_, colIndex) => {
-                nuevaFila.push(document.getElementById(`inputColSede_${colIndex}`).value);
-            });
-            
-            if (index === -1) {
-                catalogoSedes.push(nuevaFila);
-            } else {
-                catalogoSedes[index] = nuevaFila;
-            }
-            
-            const modal = bootstrap.Modal.getInstance(document.getElementById('modalEditarRegistroSede'));
-            modal.hide();
-            renderEditorSedes(); 
+            columnasSedes.forEach((_, colIndex) => nuevaFila.push(document.getElementById(`inputColSede_${colIndex}`).value));
+            if (index === -1) catalogoSedes.push(nuevaFila);
+            else catalogoSedes[index] = nuevaFila;
+            bootstrap.Modal.getInstance(document.getElementById('modalEditarRegistroSede')).hide();
+            renderEditorSedes();
         };
 
         window.eliminarFilaSede = function(index) {
-            if(confirm("¿Estás seguro de eliminar este registro del catálogo de sedes?")) {
-                catalogoSedes.splice(index, 1);
-                renderEditorSedes();
-            }
+            if(confirm("¿Eliminar este registro?")) { catalogoSedes.splice(index, 1); renderEditorSedes(); }
         };
 
         window.borrarTodoCatalogo = function() {
-            if(confirm("¡ATENCIÓN! ¿Estás seguro de borrar TODOS los registros del catálogo?")) {
-                catalogoSedes = [];
-                renderEditorSedes();
-            }
+            if(confirm("¿Borrar todo el catálogo?")) { catalogoSedes = []; renderEditorSedes(); }
         };
 
         window.exportarCSV = function() {
-            let csvContent = "\uFEFF"; 
-            csvContent += columnasSedes.join(",") + "\n";
-            
+            let csvContent = "\uFEFF" + columnasSedes.join(",") + "\n";
             catalogoSedes.forEach(row => {
-                let rowSanitized = row.map(v => {
-                    let val = v !== undefined ? String(v) : "";
-                    val = val.replace(/"/g, '""');
-                    return `"${val}"`;
-                }).join(",");
-                csvContent += rowSanitized + "\n";
+                csvContent += row.map(v => `"${(v || "").replace(/"/g, '""')}"`).join(",") + "\n";
             });
-            
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", "catalogo_sedes_respaldo.csv");
-            document.body.appendChild(link);
+            link.href = URL.createObjectURL(blob);
+            link.download = "catalogo_sedes_respaldo.csv";
             link.click();
-            document.body.removeChild(link);
         };
 
         window.importarCSV = function() {
-            const fileInput = document.getElementById('inputCsvUpload');
-            const file = fileInput.files[0];
-            if (!file) {
-                alert("Por favor, selecciona un archivo .csv primero.");
-                return;
-            }
-            
+            const file = document.getElementById('inputCsvUpload').files[0];
+            if (!file) return;
             const reader = new FileReader();
             reader.readAsText(file, "UTF-8");
             reader.onload = function(e) {
-                const content = e.target.result;
-                const rows = content.split('\n');
+                const rows = e.target.result.split('\n');
                 if(rows.length > 1) {
-                    if(confirm("¿Deseas reemplazar el catálogo actual con este archivo?")) {
-                        catalogoSedes = [];
-                    }
+                    if(confirm("¿Reemplazar catálogo actual?")) catalogoSedes = [];
                     for(let i=1; i<rows.length; i++){
                         if(rows[i].trim() !== ""){
-                            let valores = rows[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
-                            if(valores){
-                                valores = valores.map(v => v.replace(/^"|"$/g, '').replace(/""/g, '"'));
-                                while(valores.length < columnasSedes.length) valores.push("");
-                                catalogoSedes.push(valores.slice(0, columnasSedes.length));
+                            let vals = rows[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+                            if(vals) {
+                                vals = vals.map(v => v.replace(/^"|"$/g, '').replace(/""/g, '"'));
+                                while(vals.length < columnasSedes.length) vals.push("");
+                                catalogoSedes.push(vals.slice(0, columnasSedes.length));
                             }
                         }
                     }
                     renderEditorSedes();
                     alert("Importación completada.");
-                    fileInput.value = "";
                 }
             };
         };
 
-        // --- CALENDARIO Y FILTRADO POR MÓDULO ---
-
+        // --- CALENDARIO Y VACIADO FINAL ---
         function actualizarInfoHorario() {
-            const modulo = document.getElementById('selectModulo').value;
-            document.getElementById('infoHorarioModulo').innerHTML = `<i class="fas fa-clock text-muted me-1"></i> <strong>Horario:</strong> ${horariosTexto[modulo]}`;
+            const mod = document.getElementById('selectModulo').value;
+            document.getElementById('infoHorarioModulo').innerHTML = `<i class="fas fa-clock text-muted me-1"></i> <strong>Horario:</strong> ${horariosTexto[mod]}`;
         }
 
         function renderFestivos() {
@@ -656,92 +656,70 @@
                 container.innerHTML = '<span class="text-muted fst-italic">Sin días festivos registrados.</span>';
                 return;
             }
-            container.innerHTML = diasFestivos.map(d => `
-                <span class="badge bg-danger me-1 mb-1 p-1">${d} <i class="fas fa-times cursor-pointer ms-1" onclick="window.eliminarFestivo('${d}')"></i></span>
-            `).join('');
+            container.innerHTML = diasFestivos.map(d => `<span class="badge bg-danger me-1 mb-1 p-1">${d}</span>`).join('');
         }
 
         function setupMesButtons() {
-            const buttons = document.querySelectorAll('#mesSelectorBtns button');
-            buttons.forEach((btn) => {
-                btn.addEventListener('click', () => {
-                    buttons.forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    mesActivo = parseInt(btn.getAttribute('data-mes'));
+            document.querySelectorAll('#mesSelectorBtns button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('#mesSelectorBtns button').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    mesActivo = parseInt(e.target.getAttribute('data-mes'));
                     renderCalendar();
                 });
             });
         }
 
-        function obtenerSedesPorModulo(moduloCVE) {
-            // Filtra el catálogo donde "CVE DE MODULO" (columna índice 5) coincide con el módulo activo
-            return catalogoSedes.filter(fila => fila[5] === moduloCVE);
+        function obtenerSedesPorModulo(mod) {
+            return catalogoSedes.filter(f => f[5] === mod);
         }
 
         function renderCalendar() {
             const grid = document.getElementById('calendarGrid');
             grid.innerHTML = '';
-
             const mes = mesActivo;
-            const anio = (mes === 0) ? 2027 : 2026;
-
+            const anio = mes === 0 ? 2027 : 2026;
             const primerDiaIndex = new Date(anio, mes, 1).getDay();
             const totalDiasMes = new Date(anio, mes + 1, 0).getDate();
             const moduloActual = document.getElementById('selectModulo').value;
 
             for (let i = 0; i < primerDiaIndex; i++) {
-                const emptyCell = document.createElement('div');
-                emptyCell.className = 'calendar-cell disabled';
-                grid.appendChild(emptyCell);
+                grid.appendChild(Object.assign(document.createElement('div'), { className: 'calendar-cell disabled' }));
             }
 
             for (let dia = 1; dia <= totalDiasMes; dia++) {
-                const mesStr = String(mes + 1).padStart(2, '0');
-                const diaStr = String(dia).padStart(2, '0');
-                const fechaStr = `${anio}-${mesStr}-${diaStr}`;
+                const fechaStr = `${anio}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
                 const dbKey = `${moduloActual}_${fechaStr.replace(/-/g, '_')}`;
                 const diaSemana = new Date(anio, mes, dia).getDay();
 
                 const cell = document.createElement('div');
                 cell.className = `calendar-cell theme-${moduloActual}`;
 
-                let isFestivo = diasFestivos.includes(fechaStr);
-                let esFinDeSemanaMovil = (moduloActual !== "050351" && (diaSemana === 0 || diaSemana === 6));
-                let esDomingoFijo = (moduloActual === "050351" && diaSemana === 0);
+                const isFestivo = diasFestivos.includes(fechaStr);
+                const esFinSemanaMovil = moduloActual !== "050351" && (diaSemana === 0 || diaSemana === 6);
+                const esDomingoFijo = moduloActual === "050351" && diaSemana === 0;
 
-                if (isFestivo) {
-                    cell.className = 'calendar-cell festive';
-                } else if (esFinDeSemanaMovil || esDomingoFijo) {
-                    cell.className = 'calendar-cell disabled';
-                }
+                if (isFestivo) cell.className = 'calendar-cell festive';
+                else if (esFinSemanaMovil || esDomingoFijo) cell.className = 'calendar-cell disabled';
 
                 if (moduloActual === "050351" && !esDomingoFijo && !isFestivo && !dbRegistros[dbKey]) {
                     const sedesFijo = obtenerSedesPorModulo("050351");
-                    if(sedesFijo.length > 0){
-                        dbRegistros[dbKey] = { modulo: "050351", fecha: fechaStr, identificadorSede: sedesFijo[0][0] };
-                    }
+                    if (sedesFijo.length > 0) dbRegistros[dbKey] = { modulo: "050351", fecha: fechaStr, identificadorSede: sedesFijo[0][0] };
                 }
 
-                let contenidoHtml = `<div class="day-number">${dia}</div>`;
-                
-                if (isFestivo) {
-                    contenidoHtml += `<span class="badge bg-danger badge-sede mt-1">Festivo / Inhábil</span>`;
-                } else if (esFinDeSemanaMovil || esDomingoFijo) {
-                    contenidoHtml += `<span class="text-muted fst-italic" style="font-size:0.7rem;">Sin Asignar</span>`;
-                } else if (dbRegistros[dbKey] && dbRegistros[dbKey].identificadorSede) {
-                    const idSede = dbRegistros[dbKey].identificadorSede;
-                    // Muestra directamente el Identificador de Sede seleccionado en el calendario
-                    contenidoHtml += `<span class="badge badge-sede badge-sede-${moduloActual} mt-1 shadow-sm fw-bold">${idSede}</span>`;
+                let html = `<div class="day-number">${dia}</div>`;
+                if (isFestivo) html += `<span class="badge bg-danger badge-sede mt-1">Festivo</span>`;
+                else if (esFinSemanaMovil || esDomingoFijo) html += `<span class="text-muted fst-italic" style="font-size:0.7rem;">Inhábil</span>`;
+                else if (dbRegistros[dbKey]?.identificadorSede) {
+                    html += `<span class="badge badge-sede badge-sede-${moduloActual} mt-1 fw-bold">${dbRegistros[dbKey].identificadorSede}</span>`;
                 } else {
-                    contenidoHtml += `<span class="text-primary fw-bold fst-italic" style="font-size:0.75rem;"><i class="fas fa-plus-circle me-1"></i>Asignar Sede</span>`;
+                    html += `<span class="text-primary fw-bold fst-italic" style="font-size:0.75rem;"><i class="fas fa-plus-circle"></i> Asignar</span>`;
                 }
+                cell.innerHTML = html;
 
-                cell.innerHTML = contenidoHtml;
-
-                if (!isFestivo && !esFinDeSemanaMovil && !esDomingoFijo) {
+                if (!isFestivo && !esFinSemanaMovil && !esDomingoFijo) {
                     cell.addEventListener('click', () => abrirModalSede(fechaStr));
                 }
-
                 grid.appendChild(cell);
             }
         }
@@ -749,125 +727,207 @@
         window.abrirModalSede = function(fechaStr) {
             document.getElementById('modalFechaInput').value = fechaStr;
             document.getElementById('modalFechaTitulo').innerText = `Asignar Sede - ${fechaStr}`;
-            
             const moduloActual = document.getElementById('selectModulo').value;
             const selectSede = document.getElementById('selectSedeModal');
             selectSede.innerHTML = '';
             const dbKey = `${moduloActual}_${fechaStr.replace(/-/g, '_')}`;
 
-            // FILTRAR ESTRICTAMENTE LAS SEDES QUE CORRESPONDEN A ESTE MÓDULO POR "CVE DE MODULO"
-            const sedesDelModulo = obtenerSedesPorModulo(moduloActual);
-
-            if (sedesDelModulo.length === 0) {
+            obtenerSedesPorModulo(moduloActual).forEach(s => {
                 const opt = document.createElement('option');
-                opt.value = "";
-                opt.textContent = "No hay sedes registradas para este módulo en el Catálogo";
+                opt.value = s[0];
+                opt.textContent = `${s[0]} — (${s[10]})`;
+                if (dbRegistros[dbKey]?.identificadorSede === s[0]) opt.selected = true;
                 selectSede.appendChild(opt);
-                document.getElementById('infoSedeSeleccionadaModal').innerHTML = '';
-            } else {
-                sedesDelModulo.forEach(sedeData => {
-                    const idSede = sedeData[0]; // identificador sede
-                    const nombreLocalidad = sedeData[10]; // nombre localidad
-                    const opt = document.createElement('option');
-                    opt.value = idSede;
-                    // El combo muestra claramente el Identificador de Sede acompañado de su localidad para referencia
-                    opt.textContent = `${idSede} — (${nombreLocalidad})`; 
-                    
-                    if (dbRegistros[dbKey] && dbRegistros[dbKey].identificadorSede === idSede) {
-                        opt.selected = true;
-                    }
-                    selectSede.appendChild(opt);
-                });
-                // Disparar evento para cargar info inicial
-                selectSede.dispatchEvent(new Event('change'));
-            }
-
-            const modal = new bootstrap.Modal(document.getElementById('modalAsignarSede'));
-            modal.show();
-        }
+            });
+            selectSede.dispatchEvent(new Event('change'));
+            new bootstrap.Modal(document.getElementById('modalAsignarSede')).show();
+        };
 
         function actualizarResumen() {
             const moduloActual = document.getElementById('selectModulo').value;
             const tbody = document.getElementById('tablaResumenSedes');
             tbody.innerHTML = '';
-
-            let conteoPorSede = {};
-            let totalTrabajados = 0;
+            let conteo = {}, total = 0;
 
             Object.values(dbRegistros).forEach(reg => {
                 if (reg && reg.modulo === moduloActual && reg.identificadorSede) {
-                    totalTrabajados++;
-                    const idSede = reg.identificadorSede;
-                    const sedeData = catalogoSedes.find(s => s[0] === idSede);
-                    const nombreLocalidad = sedeData ? sedeData[10] : "Desconocida";
-                    
-                    if (!conteoPorSede[idSede]) {
-                        conteoPorSede[idSede] = { modulo: reg.modulo, localidad: nombreLocalidad, fechas: [] };
-                    }
-                    conteoPorSede[idSede].fechas.push(reg.fecha);
+                    total++;
+                    const sData = catalogoSedes.find(s => s[0] === reg.identificadorSede);
+                    const loc = sData ? sData[10] : "Desconocida";
+                    if (!conteo[reg.identificadorSede]) conteo[reg.identificadorSede] = { modulo: reg.modulo, localidad: loc, fechas: [] };
+                    conteo[reg.identificadorSede].fechas.push(reg.fecha);
                 }
             });
 
-            document.getElementById('totalDiasTrabajados').innerText = totalTrabajados;
-
-            const sedesKeys = Object.keys(conteoPorSede);
-            if (sedesKeys.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-3">Aún no hay días asignados para este módulo.</td></tr>`;
+            document.getElementById('totalDiasTrabajados').innerText = total;
+            const keys = Object.keys(conteo);
+            if (keys.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-3">Sin días asignados.</td></tr>`;
                 return;
             }
 
-            sedesKeys.forEach(idSede => {
-                const datos = conteoPorSede[idSede];
-                datos.fechas.sort();
-                const badgeColorClass = `badge-sede-${moduloActual}`;
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><span class="badge bg-secondary">${datos.modulo}</span></td>
-                    <td class="fw-bold text-primary">${idSede}</td>
-                    <td>${datos.localidad}</td>
-                    <td class="text-center"><span class="badge ${badgeColorClass} rounded-pill px-3">${datos.fechas.length} días</span></td>
-                    <td class="small text-muted">${datos.fechas.join(', ')}</td>
-                `;
-                tbody.appendChild(tr);
+            keys.forEach(id => {
+                const d = conteo[id];
+                d.fechas.sort();
+                tbody.innerHTML += `
+                    <tr>
+                        <td><span class="badge bg-secondary">${d.modulo}</span></td>
+                        <td class="fw-bold text-primary">${id}</td>
+                        <td>${d.localidad}</td>
+                        <td class="text-center"><span class="badge badge-sede-${moduloActual} rounded-pill px-3">${d.fechas.length} días</span></td>
+                        <td class="small text-muted">${d.fechas.join(', ')}</td>
+                    </tr>`;
             });
         }
 
         function actualizarModalListadoSedes() {
             const tbody = document.getElementById('tablaModalListadoSedes');
             tbody.innerHTML = '';
-            let conteoGeneral = {};
-
-            catalogoSedes.forEach(sedeData => {
-                const mod = sedeData[5];
-                const idSede = sedeData[0];
-                const localidad = sedeData[10];
-                const key = `${mod}_${idSede}`;
-                conteoGeneral[key] = { modulo: mod, idSede: idSede, localidad: localidad, fechas: [] };
-            });
-
+            let general = {};
+            catalogoSedes.forEach(s => general[`${s[5]}_${s[0]}`] = { modulo: s[5], idSede: s[0], localidad: s[10], fechas: [] });
             Object.values(dbRegistros).forEach(reg => {
-                if (reg && reg.modulo && reg.identificadorSede) {
-                    const idSede = reg.identificadorSede;
-                    const key = `${reg.modulo}_${idSede}`;
-                    if (conteoGeneral[key]) {
-                        conteoGeneral[key].fechas.push(reg.fecha);
+                if (reg?.modulo && reg?.identificadorSede) {
+                    const k = `${reg.modulo}_${reg.identificadorSede}`;
+                    if (general[k]) general[k].fechas.push(reg.fecha);
+                }
+            });
+            Object.values(general).forEach(item => {
+                item.fechas.sort();
+                tbody.innerHTML += `
+                    <tr>
+                        <td><span class="badge bg-secondary">${item.modulo}</span></td>
+                        <td class="fw-bold text-primary">${item.idSede}</td>
+                        <td>${item.localidad}</td>
+                        <td class="text-center"><span class="badge bg-primary rounded-pill px-3">${item.fechas.length} días</span></td>
+                        <td class="small text-muted">${item.fechas.length > 0 ? item.fechas.join(', ') : '<span class="fst-italic text-muted">Sin asignar</span>'}</td>
+                    </tr>`;
+            });
+        }
+
+        // --- MOTOR DE VACIADO FINAL (21 Columnas) ---
+        function renderVaciadoFinal() {
+            const theadTr = document.getElementById('theadVaciadoTr');
+            const tbody = document.getElementById('tbodyVaciado');
+            
+            theadTr.innerHTML = columnasVaciado.map(c => `<th>${c}</th>`).join('');
+            tbody.innerHTML = '';
+
+            // Módulos ordenados según solicitud: 050351, luego 050353, al final 050354
+            const modulosOrden = ["050351", "050353", "050354"];
+            let filasGeneradas = [];
+
+            // Periodo de campaña por defecto: 2026-09-01 a 2027-01-31
+            const inicioCamp = new Date("2026-09-01");
+            const finCamp = new Date("2027-01-31");
+
+            modulosOrden.forEach(modCVE => {
+                // Generar lista de días hábiles programados para este módulo
+                let diasProg = [];
+                let curr = new Date(inicioCamp);
+                while(curr <= finCamp) {
+                    const fStr = curr.toISOString().split('T')[0];
+                    const dow = curr.getDay(); // 0: Dom, 6: Sab
+                    const isFest = diasFestivos.includes(fStr);
+
+                    let esHabil = false;
+                    if (modCVE === "050351") {
+                        // Fijo: Lunes a Sábado, descansa Domingos y Festivos
+                        if (dow !== 0 && !isFest) esHabil = true;
+                    } else {
+                        // Semifijos / Móviles: Lunes a Viernes, descansa Sábados, Domingos y Festivos
+                        if (dow !== 0 && dow !== 6 && !isFest) esHabil = true;
                     }
+
+                    if (esHabil) {
+                        const dbKey = `${modCVE}_${fStr.replace(/-/g, '_')}`;
+                        const sedeAsignada = dbRegistros[dbKey]?.identificadorSede || (modCVE === "050351" ? obtenerSedesForMod(modCVE)[0]?.[0] : null);
+                        if (sedeAsignada) {
+                            diasProg.push({ fecha: fStr, sede: sedeAsignada });
+                        }
+                    }
+                    curr.setDate(curr.getDate() + 1);
+                }
+
+                // Agrupar en bloques continuos por sede
+                if (diasProg.length > 0) {
+                    let bloqueActual = { sede: diasProg[0].sede, inicio: diasProg[0].fecha, fin: diasProg[0].fecha };
+                    for (let i = 1; i < diasProg.length; i++) {
+                        if (diasProg[i].sede === bloqueActual.sede) {
+                            bloqueActual.fin = diasProg[i].fecha;
+                        } else {
+                            filasGeneradas.push(bloqueActual);
+                            bloqueActual = { sede: diasProg[i].sede, inicio: diasProg[i].fecha, fin: diasProg[i].fecha };
+                        }
+                    }
+                    filasGeneradas.push(bloqueActual);
                 }
             });
 
-            Object.values(conteoGeneral).forEach(item => {
-                item.fechas.sort();
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><span class="badge bg-secondary">${item.modulo}</span></td>
-                    <td class="fw-bold text-primary">${item.idSede}</td>
-                    <td>${item.localidad}</td>
-                    <td class="text-center"><span class="badge bg-primary rounded-pill px-3">${item.fechas.length} días</span></td>
-                    <td class="small text-muted">${item.fechas.length > 0 ? item.fechas.join(', ') : '<span class="fst-italic text-muted">Sin días asignados</span>'}</td>
-                `;
-                tbody.appendChild(tr);
+            if (filasGeneradas.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="${columnasVaciado.length}" class="text-center py-4 text-muted fst-italic">No hay datos suficientes para generar el vaciado final. Asigne sedes en el calendario.</td></tr>`;
+                return;
+            }
+
+            filasGeneradas.forEach(bloque => {
+                const sData = catalogoSedes.find(s => s[0] === bloque.sede) || [];
+                // Mapeo exacto a las 21 columnas solicitadas:
+                // Sede indices de catalogo:
+                // 1:CVE ENT, 2:CVE DTO, 3:CVE MPO, 4:NOMBRE MUNICIPIO, 5:CVE DE MODULO, 6:TIPO DE MODULO, 
+                // 7:SECCION SEDE, 8:TIPO SECCION, 9:CVE LOCALIDAD, 10:NOMBRE LOCALIDAD, 11:DIRECCION, 12:MZ, 
+                // 13:CODIGO POSTAL, 14:REFERENCIAS, 15:Configuracion tm, 16:Configuracion tv, 17:X, 18:Y
+                
+                const cveEnt = sData[1] || "";
+                const cveDto = sData[2] || "";
+                const cveMpo = sData[3] || "";
+                const nomMun = sData[4] || "";
+                const cveMod = sData[5] || "";
+                const tipoMod = sData[6] || "";
+                const secSede = sData[7] || "";
+                const tipoSec = sData[8] || "";
+                const cveLoc = sData[9] || "";
+                const nomLoc = sData[10] || "";
+                const dir = sData[11] || "";
+                const mz = sData[12] || "";
+                const cp = sData[13] || "";
+                const ref = sData[14] || "";
+                const diasInicio = bloque.inicio;
+                const diasFinal = bloque.fin;
+                const horario = horariosTexto[cveMod] || "";
+                const turnoMat = sData[15] || "";
+                const turnoVesp = sData[16] || "";
+                const coordX = sData[17] || "";
+                const coordY = sData[18] || "";
+
+                const rowVals = [
+                    cveEnt, cveDto, cveMpo, nomMun, cveMod, tipoMod, secSede, tipoSec, 
+                    cveLoc, nomLoc, dir, mz, cp, ref, diasInicio, diasFinal, 
+                    horario, turnoMat, turnoVesp, coordX, coordY
+                ];
+
+                tbody.innerHTML += `<tr>` + rowVals.map(v => `<td>${v}</td>`).join('') + `</tr>`;
             });
         }
+
+        function obtenerSedesForMod(mod) {
+            return catalogoSedes.filter(s => s[5] === mod);
+        }
+
+        window.exportarVaciadoCSV = function() {
+            let csvContent = "\uFEFF" + columnasVaciado.join(",") + "\n";
+            const rows = document.querySelectorAll("#tablaVaciadoFinal tbody tr");
+            rows.forEach(tr => {
+                const cols = tr.querySelectorAll("td");
+                if (cols.length > 1) {
+                    let data = Array.from(cols).map(c => `"${c.innerText.replace(/"/g, '""')}"`);
+                    csvContent += data.join(",") + "\n";
+                }
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "vaciado_final_oficial.csv";
+            link.click();
+        };
     </script>
 </body>
 </html>
