@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor Sedes - MACs</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 0.85rem;
+        }
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        .table-custom {
+            background-color: white;
+            box-shadow: 0 0.25rem 0.5rem rgba(0,0,0,0.05);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th {
+            background-color: #1b396b !important;
+            color: white !important;
+            white-space: nowrap;
+        }
+        td {
+            vertical-align: middle;
+            white-space: nowrap;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        td:hover {
+            white-space: normal;
+            word-break: break-word;
+            overflow: visible;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#"><i class="fas fa-database me-2"></i>Directorio MACs (Cloud)</a>
+            <div class="d-flex">
+                <button class="btn btn-warning btn-sm fw-bold" type="button" data-bs-toggle="modal" data-bs-target="#modalInfo">
+                    <i class="fas fa-edit me-1"></i> Editor Sedes
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid my-4">
+        <h4 class="mb-3 text-primary fw-bold"><i class="fas fa-table me-2"></i>Gestor Maestro de Sedes (Tabla Temporal)</h4>
+        
+        <div class="table-responsive table-custom">
+            <table class="table table-hover table-striped table-bordered mb-0" id="tablaSedes">
+                <thead>
+                    <tr>
+                        <th>Acciones</th>
+                        <th>identificador sede</th>
+                        <th>CVE ENT</th>
+                        <th>CVE DTO</th>
+                        <th>CVE MPO</th>
+                        <th>NOMBRE MUNICIPIO</th>
+                        <th>CVE DE MODULO</th>
+                        <th>TIPO DE MODULO</th>
+                        <th>SECCION SEDE</th>
+                        <th>TIPO SECCION</th>
+                        <th>CVE LOCALIDAD</th>
+                        <th>NOMBRE LOCALIDAD</th>
+                        <th>DIRECCION</th>
+                        <th>MZ</th>
+                        <th>CODIGO POSTAL</th>
+                        <th>REFERENCIAS</th>
+                        <th>DIAS DE FUNCIONAMIENTO</th>
+                        <th>HORARIO</th>
+                        <th>CONFIGURACION</th>
+                        <th>COORDENADAS</th>
+                        <th>TURNO MATUTINO</th>
+                        <th>TURNO VESPERTINO</th>
+                        <th>X</th>
+                        <th>Y</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodySedes">
+                    <!-- Los datos se inyectarán por JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal Editar Registro -->
+    <div class="modal fade" id="modalEditar" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold">Editar Registro de Sede</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formEditar">
+                        <input type="hidden" id="editIndex">
+                        <div class="row g-2" id="formCampos">
+                            <!-- Campos generados dinámicamente -->
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="guardarEdicion()">Guardar Cambios</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Definición de columnas exactas
+        const columnas = [
+            "identificador sede", "CVE ENT", "CVE DTO", "CVE MPO", "NOMBRE MUNICIPIO", "CVE DE MODULO", 
+            "TIPO DE MODULO", "SECCION SEDE", "TIPO SECCION", "CVE LOCALIDAD", "NOMBRE LOCALIDAD", 
+            "DIRECCION", "MZ", "CODIGO POSTAL", "REFERENCIAS", "DIAS DE FUNCIONAMIENTO", "HORARIO", 
+            "CONFIGURACION", "COORDENADAS", "TURNO MATUTINO", "TURNO VESPERTINO", "X", "Y"
+        ];
+
+        // Datos en crudo exactamente como los enviaste (parseados manuales)
+        let datosSedes = [
+            ["380-2 monclova", "5", "3", "18", "MONCLOVA", "050351", "F", "380", "U", "1", "MONCLOVA", "CALLE GUERRERO 101 ZONA CENTRO", "", "22", "5700", "ENTRE LA CALLE VENUSTIANO CARRANZA Y CALLE DE LA FUENTE", "LUN A VIER DE 08:00 a. m. A 03:00 p. m.;  SAB DE 08:00 a. m. A 03:00 p. m.;", "", "B+5", "", "", "", "-101.41806", "26.90143"],
+            ["Monclova TV", "5", "3", "18", "MONCLOVA", "050351", "F", "380", "U", "1", "MONCLOVA", "CALLE GUERRERO 101 ZONA CENTRO", "", "22", "5700", "ENTRE LA CALLE VENUSTIANO CARRANZA Y CALLE DE LA FUENTE", "LUN A VIER DE 08:00 a. m. A 03:00 p. m.;  SAB DE 09:00 a. m. A 04:00 p. m.;  DOM DE 09:00 a. m. A 04:00 p. m.", "", "B+5", "", "", "", "-101.41806", "26.90143"],
+            ["Monclova TM", "5", "3", "18", "MONCLOVA", "050351", "F", "380", "U", "1", "MONCLOVA", "CALLE GUERRERO 101 ZONA CENTRO", "", "22", "5700", "ENTRE LA CALLE VENUSTIANO CARRANZA Y CALLE DE LA FUENTE", "LUN A VIER DE 08:00 a. m. A 03:00 p. m.;", "", "B+5", "", "", "", "-101.41806", "26.90143"],
+            ["701-31 sabinas", "5", "3", "28", "SABINAS", "050353", "S", "701", "U", "1", "SABINAS", "CALLE CUAUHTÉMOC S/N COLONIA CENTENARIO", "", "31", "26750", "ESQUINA CON CALLE INDEPENDENCIA ESCUELA DE MÚSICA", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "", "B+3", "", "", "", "-101.11192", "27.85518"],
+            ["1066-16 nueva rosita", "5", "3", "32", "SAN JUAN DE SABINAS", "050353", "S", "1066", "U", "1", "NUEVA ROSITA", "AVENIDA PRESIDENTE JUÁREZ S/N COLONIA SARABIA", "", "16", "26830", "ENTRE CALLE CUARTEL Y CALLE GENERAL FRANCISCO MURGUÍA CASA DE LA CULTURA MARÍA DEL PILAR TIJERINA DE GUADIANA", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "", "B+3", "", "", "", "-101.21436", "27.94517"],
+            ["52-9 allende", "5", "3", "3", "ALLENDE", "050353", "S", "52", "U", "1", "ALLENDE", "CALLE INDEPENDENCIA 504 ORIENTE ZONA CENTRO", "", "9", "26530", "ENTRE LA  CALLE 16 DE SEPTIEMBRE Y CALLE MARIANO ESCOBEDO DIF MUNICIPAL", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "", "B+3", "", "", "", "-100.84554", "28.33979"],
+            ["52-19 allende1", "5", "3", "3", "ALLENDE", "050353", "S", "52", "U", "1", "ALLENDE1", "CALLE BENITO JUÁREZ 407 NORTE ZONA CENTRO", "", "19", "26530", "ENTRE CALLE SIMÓN BOLIVAR Y CALLE CUAUHTEMOC CASA DE LA CULTURA", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "46230", "B+3", "46231", "", "", "-100851984", "28346179"],
+            ["1499-52 villaunion", "5", "3", "37", "VILLA UNION", "050353", "S", "1499", "U", "1", "VILLAUNION", "CALLE LÁZARO CÁRDENAS 300 ZONA CENTRO", "", "52", "26600", "ENTRE LA  CALLE IGNACIO LÓPEZ RAYÓN Y CALLE CUAUHTÉMOC DIF MUNICIPAL", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "", "B+3", "", "", "", "-100.71971", "28.22042"],
+            ["717-24 cloete", "5", "3", "28", "SABINAS", "050353", "S", "717", "M", "3", "CLOETE", "CALLE VENUSTIANO CARRANZA 783 LOCALIDAD CLOETE", "", "24", "26700", "ENTRE LA CALLE FRANCISCO SARABIA Y CALLE BENITO JUÁREZ DIF MUNICIPAL", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "", "B+3", "", "", "", "-101.17836", "27.92441"],
+            ["721-81 agujita", "5", "3", "28", "SABINAS", "050353", "S", "721", "U", "2", "AGUJITA", "CALLE DÁVILA MONCADA 22 COLONIA ZONA CENTRO", "", "81", "26950", "ENTRE LA CALZADA DEL DOS Y CALLE BARRIO 4 CENTRO COMUNITARIO", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "", "B+3", "", "", "", "-101.15793", "27.89568"],
+            ["233-54 guerrero", "5", "3", "12", "GUERRERO", "050353", "S", "233", "M", "1", "GUERRERO", "CALLE LICENCIADO RAÚL LÓPEZ SÁNCHEZ S/N ZONA CENTRO", "", "54", "26640", "ENTRE LA CALLE RAMOS ARIZPE Y CALLE 5 DE MAYO DIF MUNICIPAL", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "", "B+3", "", "", "", "-100.37963", "28.30896"],
+            ["239-5 hidalgo", "5", "3", "13", "HIDALGO", "050353", "S", "239", "M", "1", "HIDALGO", "CALLE ÓSCAR FLORES TAPIA S/N COLONIA ZONA CENTRO", "", "5", "26370", "ENTRE LA CALLE LAREDO Y CALLE ZARAGOZA DIF MUNICIPAL", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "", "B+3", "", "", "", "-99.87571", "27.78931"],
+            ["88-22 castaños", "5", "3", "6", "CASTAÑOS", "050354", "M", "88", "U", "1", "CASTAÑOS", "CALLE MORELOS S/N COLONIA ZONA CENTRO", "", "22", "25870", "ENTRE LA CALLE OCAMPO Y CALLE ESCOBEDO CASA DE LA CULTURA", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "", "B+2", "", "", "", "-101.42839", "26.78652"],
+            ["1-23 abasolo", "5", "3", "1", "ABASOLO", "050354", "M", "1", "M", "1", "ABASOLO", "CALLE HIDALGO S/N COLONIA ZONA CENTRO", "", "23", "25540", "ENTRE CALLE JOSEFA ORTÍZ DE DOMÍNGUEZ Y CALLE APOLONIO M. AVILÉS DIF MUNICIPAL", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "", "B+2", "", "", "", "-101.42664", "27.18206"],
+            ["81-15 candela", "5", "3", "5", "CANDELA", "050354", "M", "81", "M", "1", "CANDELA", "AVENIDA BENITO JUÁREZ S/N LOCALIDAD CANDELA", "", "15", "25570", "ENTRE LA CALLE GENERAL CEPEDA Y CALLE FRANCISCO I. MADERO CASA DEL ADULTO MAYOR", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "", "B+2", "", "", "", "-100.66228", "26.84282"],
+            ["649-19 san jose de aura", "5", "3", "26", "PROGRESO", "050354", "M", "649", "M", "4", "SAN JOSE DE AURA", "CALLE INDEPENDENCIA S/N ZONA CENTRO", "", "19", "25430", "ENTRE LA CALLE FEDERICO RIOJAS AVILÉS Y CALLE MARIANO ABASOLO DIF MUNICIPAL", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "", "B+2", "", "", "", "-101.36978", "27.59137"],
+            ["251-38 juarez", "5", "3", "15", "JUAREZ", "050354", "M", "251", "M", "1", "JUAREZ", "CALLE BENITO JUÁREZ S/N LOCALIDAD JUÁREZ", "", "38", "25400", "ENTRE AVENIDA LAS FLORES Y CALLE VENUSTIANO CARRANZA CASA DE LA CULTURA", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "", "B+2", "", "", "", "-100.72808", "27.60596"],
+            ["130-63 primero de mayo", "5", "3", "8", "ESCOBEDO", "050354", "M", "130", "M", "3", "PRIMERO DE MAYO", "CALLE ÁLVARO OBREGÓN S/N EJIDO PRIMERO DE MAYO", "", "63", "25470", "SALÓN EJIDAL ENTRE CALLE HIDALGO Y CALLE VENUSTIANO CARRANZA", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "", "B+2", "", "", "", "-101.22452", "27.24019"],
+            ["364-23 monclova", "5", "3", "18", "MONCLOVA", "050354", "M", "364", "U", "1", "MONCLOVA", "BOULEVARD SAN JOSÉ 308 SUPER GUTIÉRREZ COLONIA HÉROES DEL 47", "", "23", "25740", "ENTRE LA CALLE NUEVO LAREDO Y CALLE PURÍSIMA", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "", "B+2", "", "", "", "-101.41076", "26.90987"],
+            ["104-14 estacion bajan", "5", "3", "6", "CASTAÑOS", "050354", "M", "104", "R", "7", "ESTACION BAJAN", "CALLE JOSE ISABEL SEPULVEDA LOCALIDAD ESTACION BAJAN", "", "14", "25896", "ESQUINA CON RAMÓN MORALES TELESECUNDARIA HÉROES DE LA INDEPENDENCIA.", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "", "B+2", "", "", "", "-101.255530", "26.531528"],
+            ["108-18 dolores", "5", "3", "6", "CASTAÑOS", "050354", "M", "108", "R", "18", "DOLORES", "CALLE 14 DE SEPTIEMBRE S/N LOCALIDAD EJIDO DOLORES", "", "18", "25896", "ENTRE LA CALLE 1 DE MAYO Y CALLE ROGELIO MONTEMAYOR SEGUI TELESECUNDARIA EJIDO DOLORES", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "", "B+2", "", "", "", "-101.429025", "26.371374"],
+            ["106-18 espinazo", "5", "3", "6", "CASTAÑOS", "050354", "M", "106", "R", "22", "ESPINAZO", "CALLE SOCRATES RIZZO S/N LOCALIDAD ESPINAZO", "", "18", "25894", "ENTRE LA CALLE ALFONSO MARTINEZ DOMÍNGUEZ Y PLUTARCO ELÍAS CALLES SALÓN EJIDAL", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "", "B+2", "", "", "", "-101.108881", "26.264978"],
+            ["97-15 la soledad", "5", "3", "6", "CASTAÑOS", "050354", "M", "97", "R", "68", "LA SOLEDAD", "CALLE BENITO JUÁREZ S/N LOCALIDAD EJIDO LA SOLEDAD", "", "15", "25877", "ENTRE LA CALLE MORELOS Y CALLE ALDAMA ESCUELA PRIMARIA BENITO JUÁREZ", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "", "B+2", "", "", "", "-101.611824", "26.753464"],
+            ["42-22 nuevo poblado el oro (ejido)", "5", "3", "18", "MONCLOVA", "050354", "M", "442", "R", "118", "NUEVO POBLADO EL ORO (EJIDO)", "CALLE SIN NOMBRE S/N LOCALIDAD EJIDO EL ORO", "", "22", "25844", "ENTRE LA CALLE VICENTE RANGEL Y CALLE SIN NOMBRE ESCUELA PRIMARIA 5 DE FEBRERO", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "", "B+2", "", "", "", "-101.17149", "26.554496"],
+            ["45-16 progreso", "5", "3", "26", "PROGRESO", "050354", "M", "645", "M", "1", "PROGRESO", "AVENIDA INDEPENDENCIA S/N ZONA CENTRO", "", "16", "25420", "ENTRE LA CALLE JOSÉ MARIA MORELOS Y PAVON Y CALLE VICENTE GUERRERO CASA DE LA CULTURA", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "", "B+2", "", "", "", "-100.987073", "27.429571"],
+            ["129-13 obayos", "5", "3", "8", "ESCOBEDO", "050354", "M", "129", "R", "2", "OBAYOS", "CALLE ITURBIDE S/N LOCALIDAD OBAYOS", "", "13", "25480", "ENTRE LA CALLES HIDALGO Y CALLE VIENTE GUERRERO PRIMARIA APOLONIO M AVILÉS", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "", "B+2", "", "", "", "-101.365424", "27.438167"],
+            ["650-10 san alberto", "5", "3", "26", "PROGRESO", "050354", "M", "650", "R", "3", "SAN ALBERTO", "EMILIANO ZAPATA S/N ZONA CENTRO PROGRESO", "", "10", "25440", "ENTRE LA CALLE HUMBERTO MOREIRA Y CALLE FEDERICO QUINTANILLA SALON EJIDAL", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "", "B+2", "", "", "", "-101.2950541", "27.443755"],
+            ["1128-10 escobedo", "5", "3", "8", "ESCOBEDO", "050354", "M", "128", "M", "1", "ESCOBEDO", "CALLE COLEGIO MILITAR S/N LOCALIDAD EJIDO ESCOBEDO", "", "10", "25470", "ENTRE LA CALLE MIGUEL HIDALGO Y CALLE IGNACIO ZARAGOZA DIF MUNICIPAL", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "", "B+2", "", "", "", "-101.413671", "27.232668"],
+            ["83-5 el huizachal", "5", "3", "5", "CANDELA", "050354", "M", "83", "R", "14", "EL HUIZACHAL", "CALLE VENUSTIANO CARRANZA S/N LOCALIDAD EL HUZACHAL", "", "5", "25590", "ENTRE LA CALLE FRANCISCO I MADERO  Y AVENIDA REVOLUCIÓN ESCUELA PRIMARIA VENUSTIANO CARRANZA", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "", "B+2", "", "", "", "-101.021859", "26.763322"],
+            ["433-49 monclova (praderas)", "5", "3", "18", "MONCLOVA", "050354", "m", "433", "U", "1", "MONCLOVA (PRADERAS)", "VILLA DEL MAR NUMERO 819 COLONIA PRADERAS DEL SUR 3 SECTOR", "", "49", "25796", "ENTRE LA CALLE VALLE AZUL Y CALLE VALLE DEL LAGO BIBLIOTECA ROTARIO DR. CARLOS CANSECO", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "", "B+2", "", "", "", "-101.439908", "26.867079"],
+            ["2-40 los rodriguez", "5", "3", "1", "ABASOLO", "050354", "m", "2", "M", "2", "LOS RODRIGUEZ", "CALLE BENITO JUÁREZ 126  LOCALIDAD LOS RODRIGUEZ COAHUILA", "", "40", "25550", "ENTRE LA CALLE ZARAGOZA Y CALLE HÉROES DEL 47 DIF MUNICIPAL", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "", "B+2", "", "", "", "-101.357588", "27.199861"],
+            ["106-10 la joya", "5", "3", "6", "CASTAÑOS", "050354", "m", "106", "R", "28", "LA JOYA", "CALLE ALLENDE S/N LOCALIDAD LA JOYA", "", "10", "25890", "ENTRE LA CALLE RUIZ CORTINEZ Y CALLE ADOLFO LOPEZ MATEO ESCUELA RURAL JUSTO SIERRA", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "", "B+2", "", "", "", "-101.194088", "26.441080"],
+            ["252-1 don martin congregacion", "5", "3", "15", "JUAREZ", "050354", "m", "252", "R", "9", "DON MARTIN CONGREGACION", "CALLE BENITO JUÁREZ S/N LOCALIDAD CONGREGACIÓN DON MARTÍN", "", "1", "25410", "ENTRE LA CALLE RODOLFO ORTIZ Y LA CALLE ERNESTO ZEDILLO UNIDAD DE SALUD IMSS BIENESTAR", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "", "B+2", "", "", "", "-100.618815", "27.527313"],
+            ["52-19 allende", "5", "3", "3", "ALLENDE", "050353", "S", "52", "U", "1", "ALLENDE", "CALLE BENITO JUÁREZ 407 NORTE ZONA CENTRO", "", "19", "26530", "ENTRE CALLE SIMÓN BOLIVAR Y CALLE CUAUHTEMOC CASA DE LA CULTURA", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "46230", "B+3", "46231", "", "", "-100851984", "28346179"],
+            ["52-9 allende1", "5", "3", "3", "ALLENDE", "050353", "S", "52", "U", "1", "ALLENDE1", "CALLE INDEPENDENCIA 504 ORIENTE ZONA CENTRO", "", "9", "26530", "ENTRE LA  CALLE 16 DE SEPTIEMBRE Y CALLE MARIANO ESCOBEDO DIF MUNICIPAL", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "", "B+3", "", "", "", "-100.84554", "28.33979"]
+        ];
+
+        function renderTabla() {
+            const tbody = document.getElementById('tbodySedes');
+            tbody.innerHTML = '';
+            
+            datosSedes.forEach((fila, index) => {
+                let htmlFila = `<tr>`;
+                htmlFila += `
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="abrirEdicion(${index})" title="Editar"><i class="fas fa-pencil-alt"></i></button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="eliminarFila(${index})" title="Eliminar"><i class="fas fa-trash-alt"></i></button>
+                    </td>`;
+                
+                fila.forEach(celda => {
+                    htmlFila += `<td>${celda}</td>`;
+                });
+                
+                htmlFila += `</tr>`;
+                tbody.innerHTML += htmlFila;
+            });
+        }
+
+        function abrirEdicion(index) {
+            document.getElementById('editIndex').value = index;
+            const camposContainer = document.getElementById('formCampos');
+            camposContainer.innerHTML = '';
+            
+            const datos = datosSedes[index];
+            
+            columnas.forEach((columna, colIndex) => {
+                const valor = datos[colIndex];
+                const inputHtml = `
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label fw-bold text-muted small mb-0">${columna}</label>
+                        <input type="text" class="form-control form-control-sm" id="inputCol_${colIndex}" value="${valor}">
+                    </div>
+                `;
+                camposContainer.innerHTML += inputHtml;
+            });
+            
+            const modal = new bootstrap.Modal(document.getElementById('modalEditar'));
+            modal.show();
+        }
+
+        function guardarEdicion() {
+            const index = document.getElementById('editIndex').value;
+            
+            let nuevaFila = [];
+            columnas.forEach((_, colIndex) => {
+                const nuevoValor = document.getElementById(`inputCol_${colIndex}`).value;
+                nuevaFila.push(nuevoValor);
+            });
+            
+            datosSedes[index] = nuevaFila;
+            
+            const modal = bootstrap.Modal.getInstance(document.getElementById('modalEditar'));
+            modal.hide();
+            
+            renderTabla();
+        }
+
+        function eliminarFila(index) {
+            if(confirm("¿Estás seguro de eliminar este registro de sede?")) {
+                datosSedes.splice(index, 1);
+                renderTabla();
+            }
+        }
+
+        // Render inicial
+        document.addEventListener('DOMContentLoaded', renderTabla);
+    </script>
+</body>
+</html>
