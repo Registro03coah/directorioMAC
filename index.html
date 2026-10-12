@@ -99,7 +99,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
         <div class="container-fluid">
             <a class="navbar-brand" href="#"><i class="fas fa-id-card me-2"></i>Directorio MACs (Cloud)</a>
-            <span class="navbar-text text-light small">Versión 11.1 - Firebase Sincronizado</span>
+            <span class="navbar-text text-light small">Versión 11.2 - Firebase Sincronizado</span>
         </div>
     </nav>
 
@@ -123,10 +123,10 @@
                     <label class="form-label fw-bold small text-secondary"><i class="fas fa-calendar-alt me-1"></i> Periodo de Campaña</label>
                     <div class="row g-2">
                         <div class="col-6">
-                            <input type="date" id="fechaInicio" class="form-control form-control-sm" value="2026-01-02">
+                            <input type="date" id="fechaInicio" class="form-control form-control-sm" value="2026-09-01">
                         </div>
                         <div class="col-6">
-                            <input type="date" id="fechaFin" class="form-control form-control-sm" value="2026-03-31">
+                            <input type="date" id="fechaFin" class="form-control form-control-sm" value="2027-01-31">
                         </div>
                     </div>
                 </div>
@@ -163,11 +163,13 @@
         <!-- Selector de Mes y Calendario -->
         <div class="card card-custom mb-4">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-calendar-day me-2 text-primary"></i>Calendario Operativo y Sedes (Versión 11.1)</h5>
+                <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-calendar-day me-2 text-primary"></i>Calendario Operativo y Sedes (Versión 11.2)</h5>
                 <div class="btn-group" role="group" id="mesSelectorBtns">
-                    <button type="button" class="btn btn-outline-primary active" data-mes="0">Enero</button>
-                    <button type="button" class="btn btn-outline-primary" data-mes="1">Febrero</button>
-                    <button type="button" class="btn btn-outline-primary" data-mes="2">Marzo</button>
+                    <button type="button" class="btn btn-outline-primary active" data-mes="8">Septiembre</button>
+                    <button type="button" class="btn btn-outline-primary" data-mes="9">Octubre</button>
+                    <button type="button" class="btn btn-outline-primary" data-mes="10">Noviembre</button>
+                    <button type="button" class="btn btn-outline-primary" data-mes="11">Diciembre</button>
+                    <button type="button" class="btn btn-outline-primary" data-mes="0">Enero (2027)</button>
                 </div>
             </div>
             <div class="card-body">
@@ -291,11 +293,11 @@
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
 
-        // Sedes según Módulo (Sin la opción de Festivo)
+        // Sedes según Módulo (Monclova especificada como GUTIERREZ)
         const sedesPorModulo = {
-            "050351": ["Módulo Fijo Monclova"],
+            "050351": ["GUTIERREZ"],
             "050353": ["Agujita", "Allende", "Cloete", "Guerrero", "Hidalgo", "Nueva Rosita", "Sabinas", "Villa Union"],
-            "050354": ["Abasolo", "Candela", "Castaños", "Dolores", "Ejido El Oro", "Escobedo", "Espinazo", "Estación Bajan", "Huizachal", "Juárez", "Monclova", "Praderas", "Primero de Mayo", "Progreso", "San Alberto", "San Jose de Aura"]
+            "050354": ["Abasolo", "Candela", "Castaños", "Dolores", "Ejido El Oro", "Escobedo", "Espinazo", "Estación Bajan", "Huizachal", "Juárez", "GUTIERREZ", "Praderas", "Primero de Mayo", "Progreso", "San Alberto", "San Jose de Aura"]
         };
 
         const horariosTexto = {
@@ -305,8 +307,8 @@
         };
 
         let dbRegistros = {};
-        let diasFestivos = ["2026-01-01", "2026-02-02", "2026-03-16"];
-        let mesActivo = 0;
+        let diasFestivos = ["2026-09-16", "2026-11-02", "2026-11-16", "2025-12-25", "2027-01-01"];
+        let mesActivo = 8; // Septiembre por defecto (0-indexed: 8 = Septiembre)
 
         document.addEventListener('DOMContentLoaded', () => {
             actualizarInfoHorario();
@@ -362,7 +364,6 @@
                 actualizarResumen();
             });
 
-            // Actualizar modal de listado general cuando se abra
             document.getElementById('modalListadoSedes').addEventListener('show.bs.modal', actualizarModalListadoSedes);
 
             renderFestivos();
@@ -393,11 +394,11 @@
 
         function setupMesButtons() {
             const buttons = document.querySelectorAll('#mesSelectorBtns button');
-            buttons.forEach((btn, idx) => {
+            buttons.forEach((btn) => {
                 btn.addEventListener('click', () => {
                     buttons.forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
-                    mesActivo = idx;
+                    mesActivo = parseInt(btn.getAttribute('data-mes'));
                     renderCalendar();
                 });
             });
@@ -407,8 +408,10 @@
             const grid = document.getElementById('calendarGrid');
             grid.innerHTML = '';
 
-            const anio = 2026;
             const mes = mesActivo;
+            // Si mes es 0 (Enero), corresponde al año 2027, de lo contrario 2026
+            const anio = (mes === 0) ? 2027 : 2026;
+
             const primerDiaIndex = new Date(anio, mes, 1).getDay();
             const totalDiasMes = new Date(anio, mes + 1, 0).getDate();
             const moduloActual = document.getElementById('selectModulo').value;
@@ -439,11 +442,6 @@
                     cell.className = 'calendar-cell festive';
                 } else if (esFinDeSemanaMovil || esDomingoFijo) {
                     cell.className = 'calendar-cell disabled';
-                }
-
-                // Autorellenar Módulo Fijo (050351) por defecto de lunes a sábado si no existe registro previo
-                if (moduloActual === "050351" && !esDomingoFijo && !isFestivo && !dbRegistros[dbKey]) {
-                    dbRegistros[dbKey] = { modulo: "050351", fecha: fechaStr, sede: "Módulo Fijo Monclova" };
                 }
 
                 let contenidoHtml = `<div class="day-number">${dia}</div>`;
@@ -540,7 +538,6 @@
 
             let conteoGeneral = {};
 
-            // Inicializar todas las sedes posibles de todos los módulos con 0 días
             Object.keys(sedesPorModulo).forEach(mod => {
                 sedesPorModulo[mod].forEach(sede => {
                     const key = `${mod}_${sede}`;
@@ -548,7 +545,6 @@
                 });
             });
 
-            // Contar registros reales de Firebase
             Object.values(dbRegistros).forEach(reg => {
                 if (reg && reg.modulo && reg.sede) {
                     const key = `${reg.modulo}_${reg.sede}`;
