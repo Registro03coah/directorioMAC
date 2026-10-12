@@ -67,7 +67,7 @@
         .theme-050353 { background-color: #fff9e6 !important; border-color: #ffe8a1 !important; } 
         .theme-050354 { background-color: #e8f5e9 !important; border-color: #c8e6c9 !important; } 
 
-        /* Insignias de sedes con colores intensos personalizados por Módulo (¡Sin negros!) */
+        /* Insignias de sedes con colores intensos personalizados por Módulo */
         .badge-sede-050351 { background-color: #0d6efd !important; color: #ffffff !important; }
         .badge-sede-050353 { background-color: #fd7e14 !important; color: #ffffff !important; }
         .badge-sede-050354 { background-color: #198754 !important; color: #ffffff !important; }
@@ -99,7 +99,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
         <div class="container-fluid">
             <a class="navbar-brand" href="#"><i class="fas fa-id-card me-2"></i>Directorio MACs (Cloud)</a>
-            <span class="navbar-text text-light small">Versión 11.0 - Firebase Sincronizado</span>
+            <span class="navbar-text text-light small">Versión 11.1 - Firebase Sincronizado</span>
         </div>
     </nav>
 
@@ -163,7 +163,7 @@
         <!-- Selector de Mes y Calendario -->
         <div class="card card-custom mb-4">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-calendar-day me-2 text-primary"></i>Calendario Operativo y Sedes</h5>
+                <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-calendar-day me-2 text-primary"></i>Calendario Operativo y Sedes (Versión 11.1)</h5>
                 <div class="btn-group" role="group" id="mesSelectorBtns">
                     <button type="button" class="btn btn-outline-primary active" data-mes="0">Enero</button>
                     <button type="button" class="btn btn-outline-primary" data-mes="1">Febrero</button>
@@ -225,7 +225,7 @@
                 <div class="modal-body">
                     <input type="hidden" id="modalFechaInput">
                     <div class="mb-3">
-                        <label for="selectSedeModal" class="form-label fw-bold">Seleccione Sede o Estatus:</label>
+                        <label for="selectSedeModal" class="form-label fw-bold">Seleccione Sede:</label>
                         <select id="selectSedeModal" class="form-select"></select>
                     </div>
                 </div>
@@ -291,11 +291,11 @@
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
 
-        // Sedes según Módulo
+        // Sedes según Módulo (Sin la opción de Festivo)
         const sedesPorModulo = {
-            "050351": ["Módulo Fijo Monclova", "Festivo"],
-            "050353": ["Agujita", "Allende", "Cloete", "Guerrero", "Hidalgo", "Nueva Rosita", "Sabinas", "Villa Union", "Festivo"],
-            "050354": ["Abasolo", "Candela", "Castaños", "Dolores", "Ejido El Oro", "Escobedo", "Espinazo", "Estación Bajan", "Huizachal", "Juárez", "Monclova", "Praderas", "Primero de Mayo", "Progreso", "San Alberto", "San Jose de Aura", "Festivo"]
+            "050351": ["Módulo Fijo Monclova"],
+            "050353": ["Agujita", "Allende", "Cloete", "Guerrero", "Hidalgo", "Nueva Rosita", "Sabinas", "Villa Union"],
+            "050354": ["Abasolo", "Candela", "Castaños", "Dolores", "Ejido El Oro", "Escobedo", "Espinazo", "Estación Bajan", "Huizachal", "Juárez", "Monclova", "Praderas", "Primero de Mayo", "Progreso", "San Alberto", "San Jose de Aura"]
         };
 
         const horariosTexto = {
@@ -346,18 +346,12 @@
 
                 const dbKey = fecha.replace(/-/g, '_');
 
-                if (sede === "Festivo") {
-                    if (!diasFestivos.includes(fecha)) diasFestivos.push(fecha);
-                    delete dbRegistros[dbKey];
-                    await set(ref(database, 'directorioMACs/' + dbKey), null);
-                } else {
-                    const nuevoRegistro = { modulo, fecha, sede };
-                    dbRegistros[dbKey] = nuevoRegistro;
-                    try {
-                        await set(ref(database, 'directorioMACs/' + dbKey), nuevoRegistro);
-                    } catch (e) {
-                        console.error("Error al guardar en Firebase:", e);
-                    }
+                const nuevoRegistro = { modulo, fecha, sede };
+                dbRegistros[dbKey] = nuevoRegistro;
+                try {
+                    await set(ref(database, 'directorioMACs/' + dbKey), nuevoRegistro);
+                } catch (e) {
+                    console.error("Error al guardar en Firebase:", e);
                 }
 
                 const modalEl = document.getElementById('modalAsignarSede');
@@ -508,7 +502,7 @@
             let totalTrabajados = 0;
 
             Object.values(dbRegistros).forEach(reg => {
-                if (reg && reg.modulo === moduloActual && reg.sede && reg.sede !== "Festivo") {
+                if (reg && reg.modulo === moduloActual && reg.sede) {
                     totalTrabajados++;
                     if (!conteoPorSede[reg.sede]) {
                         conteoPorSede[reg.sede] = { modulo: reg.modulo, fechas: [] };
@@ -549,16 +543,14 @@
             // Inicializar todas las sedes posibles de todos los módulos con 0 días
             Object.keys(sedesPorModulo).forEach(mod => {
                 sedesPorModulo[mod].forEach(sede => {
-                    if (sede !== "Festivo") {
-                        const key = `${mod}_${sede}`;
-                        conteoGeneral[key] = { modulo: mod, sede: sede, fechas: [] };
-                    }
+                    const key = `${mod}_${sede}`;
+                    conteoGeneral[key] = { modulo: mod, sede: sede, fechas: [] };
                 });
             });
 
             // Contar registros reales de Firebase
             Object.values(dbRegistros).forEach(reg => {
-                if (reg && reg.modulo && reg.sede && reg.sede !== "Festivo") {
+                if (reg && reg.modulo && reg.sede) {
                     const key = `${reg.modulo}_${reg.sede}`;
                     if (conteoGeneral[key]) {
                         conteoGeneral[key].fechas.push(reg.fecha);
