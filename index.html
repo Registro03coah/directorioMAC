@@ -99,7 +99,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
         <div class="container-fluid">
             <a class="navbar-brand" href="#"><i class="fas fa-id-card me-2"></i>Directorio MACs (Cloud)</a>
-            <span class="navbar-text text-light small">Versión 11.2 - Firebase Sincronizado</span>
+            <span class="navbar-text text-light small">Versión 11.3 - Firebase Sincronizado</span>
         </div>
     </nav>
 
@@ -163,7 +163,7 @@
         <!-- Selector de Mes y Calendario -->
         <div class="card card-custom mb-4">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-calendar-day me-2 text-primary"></i>Calendario Operativo y Sedes (Versión 11.2)</h5>
+                <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-calendar-day me-2 text-primary"></i>Calendario Operativo y Sedes (Versión 11.3)</h5>
                 <div class="btn-group" role="group" id="mesSelectorBtns">
                     <button type="button" class="btn btn-outline-primary active" data-mes="8">Septiembre</button>
                     <button type="button" class="btn btn-outline-primary" data-mes="9">Octubre</button>
@@ -293,11 +293,11 @@
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
 
-        // Sedes según Módulo (Monclova especificada como GUTIERREZ)
+        // Sedes según Módulo
         const sedesPorModulo = {
             "050351": ["GUTIERREZ"],
             "050353": ["Agujita", "Allende", "Cloete", "Guerrero", "Hidalgo", "Nueva Rosita", "Sabinas", "Villa Union"],
-            "050354": ["Abasolo", "Candela", "Castaños", "Dolores", "Ejido El Oro", "Escobedo", "Espinazo", "Estación Bajan", "Huizachal", "Juárez", "GUTIERREZ", "Praderas", "Primero de Mayo", "Progreso", "San Alberto", "San Jose de Aura"]
+            "050354": ["Abasolo", "Candela", "Castaños", "Dolores", "Ejido El Oro", "Escobedo", "Espinazo", "Estacion Bajan", "Huizachal", "Juarez", "GUTIERREZ", "La Joya", "La Soledad", "Los Rodriguez", "Obayos", "Presa Don Martin", "Praderas", "Primero de Mayo", "Progreso", "San Alberto", "San Jose de Aura"]
         };
 
         const horariosTexto = {
@@ -308,13 +308,12 @@
 
         let dbRegistros = {};
         let diasFestivos = ["2026-09-16", "2026-11-02", "2026-11-16", "2025-12-25", "2027-01-01"];
-        let mesActivo = 8; // Septiembre por defecto (0-indexed: 8 = Septiembre)
+        let mesActivo = 8; // Septiembre por defecto
 
         document.addEventListener('DOMContentLoaded', () => {
             actualizarInfoHorario();
             setupMesButtons();
             
-            // Escuchar cambios en tiempo real desde Firebase Realtime Database
             const registrosRef = ref(database, 'directorioMACs');
             onValue(registrosRef, (snapshot) => {
                 const data = snapshot.val();
@@ -346,7 +345,7 @@
                 const sede = document.getElementById('selectSedeModal').value;
                 const modulo = document.getElementById('selectModulo').value;
 
-                const dbKey = fecha.replace(/-/g, '_');
+                const dbKey = `${modulo}_${fecha.replace(/-/g, '_')}`;
 
                 const nuevoRegistro = { modulo, fecha, sede };
                 dbRegistros[dbKey] = nuevoRegistro;
@@ -409,27 +408,24 @@
             grid.innerHTML = '';
 
             const mes = mesActivo;
-            // Si mes es 0 (Enero), corresponde al año 2027, de lo contrario 2026
             const anio = (mes === 0) ? 2027 : 2026;
 
             const primerDiaIndex = new Date(anio, mes, 1).getDay();
             const totalDiasMes = new Date(anio, mes + 1, 0).getDate();
             const moduloActual = document.getElementById('selectModulo').value;
 
-            // Rellenar espacios vacíos
             for (let i = 0; i < primerDiaIndex; i++) {
                 const emptyCell = document.createElement('div');
                 emptyCell.className = 'calendar-cell disabled';
                 grid.appendChild(emptyCell);
             }
 
-            // Días del mes
             for (let dia = 1; dia <= totalDiasMes; dia++) {
                 const mesStr = String(mes + 1).padStart(2, '0');
                 const diaStr = String(dia).padStart(2, '0');
                 const fechaStr = `${anio}-${mesStr}-${diaStr}`;
-                const dbKey = fechaStr.replace(/-/g, '_');
-                const diaSemana = new Date(anio, mes, dia).getDay(); // 0: Dom, 6: Sáb
+                const dbKey = `${moduloActual}_${fechaStr.replace(/-/g, '_')}`;
+                const diaSemana = new Date(anio, mes, dia).getDay();
 
                 const cell = document.createElement('div');
                 cell.className = `calendar-cell theme-${moduloActual}`;
@@ -450,7 +446,7 @@
                     contenidoHtml += `<span class="badge bg-danger badge-sede mt-1">Festivo / Inhábil</span>`;
                 } else if (esFinDeSemanaMovil || esDomingoFijo) {
                     contenidoHtml += `<span class="text-muted fst-italic" style="font-size:0.7rem;">Sin Asignar</span>`;
-                } else if (dbRegistros[dbKey] && dbRegistros[dbKey].modulo === moduloActual && dbRegistros[dbKey].sede) {
+                } else if (dbRegistros[dbKey] && dbRegistros[dbKey].sede) {
                     const sedeActual = dbRegistros[dbKey].sede;
                     contenidoHtml += `<span class="badge badge-sede badge-sede-${moduloActual} mt-1 shadow-sm fw-bold">${sedeActual}</span>`;
                 } else {
@@ -459,7 +455,6 @@
 
                 cell.innerHTML = contenidoHtml;
 
-                // Evento clic para abrir modal (solo si es día laboral y no festivo)
                 if (!isFestivo && !esFinDeSemanaMovil && !esDomingoFijo) {
                     cell.addEventListener('click', () => abrirModalSede(fechaStr));
                 }
@@ -475,13 +470,13 @@
             const moduloActual = document.getElementById('selectModulo').value;
             const selectSede = document.getElementById('selectSedeModal');
             selectSede.innerHTML = '';
-            const dbKey = fechaStr.replace(/-/g, '_');
+            const dbKey = `${moduloActual}_${fechaStr.replace(/-/g, '_')}`;
 
             sedesPorModulo[moduloActual].forEach(sede => {
                 const opt = document.createElement('option');
                 opt.value = sede;
                 opt.textContent = sede;
-                if (dbRegistros[dbKey] && dbRegistros[dbKey].modulo === moduloActual && dbRegistros[dbKey].sede === sede) {
+                if (dbRegistros[dbKey] && dbRegistros[dbKey].sede === sede) {
                     opt.selected = true;
                 }
                 selectSede.appendChild(opt);
