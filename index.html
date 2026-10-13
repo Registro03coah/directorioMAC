@@ -117,7 +117,7 @@
 
         #modalGestorSedes th, #tablaVaciadoFinal th { background-color: #880e4f !important; color: white !important; white-space: nowrap; font-size: 0.75rem; padding: 8px; text-align: center; }
         #tablaVaciadoFinal td { vertical-align: middle; white-space: nowrap; font-size: 0.75rem; padding: 6px; text-align: center; }
-        #tablaVaciadoFinal td:nth-child(11) { text-align: left; } /* Localidad alineada a la izquierda */
+        #tablaVaciadoFinal td:nth-child(11) { text-align: left; }
         
         #modalGestorSedes th { background-color: #1b396b !important; }
         #modalGestorSedes td { vertical-align: middle; white-space: nowrap; max-width: 180px; overflow: hidden; text-overflow: ellipsis; font-size: 0.8rem; padding: 8px;}
@@ -191,7 +191,7 @@
                 <span>Directorio MACs</span>
             </a>
             <div class="d-flex align-items-center">
-                <span class="navbar-text text-light small me-2 fw-bold">v19.0</span>
+                <span class="navbar-text text-light small me-2 fw-bold">v20.0</span>
             </div>
         </div>
     </nav>
@@ -548,7 +548,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title fw-bold" id="modalEditarRegistroTitulo">Formulario de Sede</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="editIndexSede">
@@ -579,7 +579,6 @@
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
 
-        // Control de Foco de Conexión en Icono de Credencial
         const connectedRef = ref(database, ".info/connected");
         onValue(connectedRef, (snap) => {
             const icon = document.getElementById('statusCredentialIcon');
@@ -608,7 +607,6 @@
         let mesActivo = 8; 
         let alertaResguardoMostrada = false;
 
-        // Columnas oficiales de la tabla de directorio de módulos con coordenadas
         const columnasVaciado = [
             "CVE ENT", "CVE DTO", "CVE MPO", "NOMBRE MPIO", "CVE DE MODULO", 
             "TIPO DE MODULO", "SECCION SEDE", "TIPO SECCION", "CVE LOCALIDAD", "NOMBRE LOCALIDAD", 
@@ -691,9 +689,10 @@
             }
         };
 
+        // Lógica de días hábiles corregida por módulo
         function esDiaHabil(fechaStr, modCVE) {
             const dt = new Date(fechaStr + "T00:00:00");
-            const dow = dt.getDay(); 
+            const dow = dt.getDay(); // 0 = Domingo, 6 = Sábado
             const isFest = diasFestivos.includes(fechaStr);
             const isExtra = diasHabilesExtra.includes(fechaStr);
 
@@ -701,8 +700,10 @@
             if (isExtra) return true;
 
             if (modCVE === "050351") {
+                // 050351: Trabaja Lunes a Sábado (Descansa solo Domingo dow === 0)
                 return dow !== 0; 
             } else {
+                // 050353 y 050354: Trabaja Lunes a Viernes (Descansa Sábado dow === 6 y Domingo dow === 0)
                 return dow !== 0 && dow !== 6; 
             }
         }
@@ -1303,11 +1304,12 @@
             });
 
             const link = document.createElement("a");
-            link.href = URL.createObjectURL(new Blob([contenido], { type: 'text/plain;charset=utf-8;' }));
+            link.href = URL.createURL(new Blob([contenido], { type: 'text/plain;charset=utf-8;' }));
             link.download = "listado_sedes_visitas.txt";
             link.click();
         };
 
+        // Lógica corregida para agrupación de bloques en la tabla del Directorio
         function renderVaciadoFinal() {
             verificarYPrellenarFijo();
             const theadTr = document.getElementById('theadVaciadoTr');
@@ -1349,12 +1351,29 @@
                     for (let i = 1; i < diasProg.length; i++) {
                         const prevDate = new Date(diasProg[i-1].fecha + "T00:00:00");
                         const currDate = new Date(diasProg[i].fecha + "T00:00:00");
-                        const diffTime = Math.abs(currDate - prevDate);
-                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                         
-                        let esConsecutivoHabil = diffDays === 1;
+                        // Verificamos si hay días festivos reales (o salto de fin de semana para los modulos 53/54) entre el día anterior hábil y el actual
+                        let haySaltoFestivoOInhabilEnMedio = false;
+                        let checkDate = new Date(prevDate);
+                        checkDate.setDate(checkDate.getDate() + 1);
+                        while(checkDate < currDate) {
+                            const checkStr = checkDate.toISOString().split('T')[0];
+                            if (diasFestivos.includes(checkStr) && !diasHabilesExtra.includes(checkStr)) {
+                                haySaltoFestivoOInhabilEnMedio = true;
+                                break;
+                            }
+                            checkDate.setDate(checkDate.getDate() + 1);
+                        }
 
-                        if (diasProg[i].sede === bloqueActual.sede && esConsecutivoHabil) {
+                        // Para 050353 y 050354, el corte de fin de semana (Viernes a Lunes) también corta el bloque
+                        let esFinDeSemanaSalto = false;
+                        if (modCVE !== "050351") {
+                            const diffTime = Math.abs(currDate - prevDate);
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                            if (diffDays > 3) esFinDeSemanaSalto = true; // Salto de fin de semana
+                        }
+
+                        if (diasProg[i].sede === bloqueActual.sede && !haySaltoFestivoOInhabilEnMedio && !esFinDeSemanaSalto) {
                             bloqueActual.fin = diasProg[i].fecha;
                         } else {
                             filasGeneradas.push(bloqueActual);
@@ -1375,9 +1394,6 @@
                 const diaInicialStr = formatearFechaDDMMYYYY(bloque.inicio);
                 const diaFinalStr = formatearFechaDDMMYYYY(bloque.fin);
                 
-                // Mapeo corregido y exacto según solicitud e imagen:
-                // s[1]=CVE ENT, s[2]=CVE DTO, s[3]=CVE MPO, s[4]=NOMBRE MPIO, s[5]=CVE MOD, s[6]=TIPO MOD, s[7]=SEC SEDE, s[8]=TIPO SEC, s[9]=CVE LOC, s[10]=NOM LOC, s[11]=DIR, s[12]=MZ, s[13]=CP, s[14]=REF
-                // s[15]=Horario, s[16]=Config TM (ej. B+5), s[17]=Config TV (ej. NA), s[18]=Coordenada X (Negativa -101.xxx), s[19]=Coordenada Y (Positiva 26.xxx)
                 const rowVals = [
                     sData[1] || "", 
                     sData[2] || "", 
@@ -1396,10 +1412,10 @@
                     diaInicialStr,   
                     diaFinalStr,     
                     horariosTexto[sData[5]] || "", 
-                    sData[16] || "", // Configuración TM (B+5, B+3...)
-                    sData[17] || "NA", // Configuración TV (NA)
-                    sData[18] || "", // Coordenadas X (-101.xxx)
-                    sData[19] || ""  // Coordenadas Y (26.xxx)
+                    sData[16] || "", 
+                    sData[17] || "NA", 
+                    sData[18] || "", 
+                    sData[19] || ""  
                 ];
 
                 tbody.innerHTML += `<tr>` + rowVals.map(v => `<td>${v}</td>`).join('') + `</tr>`;
