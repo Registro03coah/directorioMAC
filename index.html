@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Reportes - Directorio MACs</title>
+    <title>Sistema Web para Directorio de Módulos</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- FontAwesome para iconos -->
@@ -31,6 +31,16 @@
             border: none;
             box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
             border-radius: 0.75rem;
+            transition: all 0.2s ease-in-out;
+        }
+        /* Efecto cursor de mano interactivo para botones principales */
+        .card-action-btn {
+            cursor: pointer;
+        }
+        .card-action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.1);
+            border-color: #0d6efd !important;
         }
         .calendar-grid {
             display: grid;
@@ -141,7 +151,6 @@
             margin-top: auto;
         }
         
-        /* Indicador de conexión con sombra verde/roja en icono de credencial */
         .status-credential-icon {
             font-size: 1.2rem;
             transition: all 0.3s ease;
@@ -155,18 +164,13 @@
             filter: drop-shadow(0 0 6px #dc3545);
         }
 
-        /* Botón de panel técnico estilo imagen */
-        .btn-panel-admin {
-            background-color: #f8f9fa;
-            border: 1px solid #ced4da;
-            color: #212529;
-            font-weight: 600;
-            border-radius: 0.5rem;
-            transition: all 0.2s;
-        }
-        .btn-panel-admin:hover {
-            background-color: #e9ecef;
-            border-color: #adb5bd;
+        .avatar-admin {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #0d6efd;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
         }
 
         @media print {
@@ -187,42 +191,46 @@
                 <span>Directorio MACs</span>
             </a>
             <div class="d-flex align-items-center">
-                <span class="navbar-text text-light small me-2 fw-bold">v17.0</span>
+                <span class="navbar-text text-light small me-2 fw-bold">v18.0</span>
             </div>
         </div>
     </nav>
 
     <div class="main-content">
-        <!-- PANTALLA 1: SELECTOR DE VISTA (HOME CON CENTRO DE MANDO) -->
+        <!-- PANTALLA 1: SELECTOR DE VISTA (HOME) -->
         <div id="vistaSelector" class="container my-5 view-section active">
             <div class="row justify-content-center">
                 <div class="col-md-8 text-center">
-                    <div class="card card-custom p-4 p-md-5 bg-white">
-                        <h2 class="fw-bold text-dark mb-3"><i class="fas fa-cubes text-primary me-2"></i>Sistema de Control Operativo</h2>
-                        <p class="text-muted mb-4">Seleccione el módulo o apartado al que desea ingresar:</p>
-                        
-                        <!-- BOTÓN DE PANEL DE SOPORTE TÉCNICO / ADMINISTRADOR (NUEVO) -->
-                        <div class="mb-4">
-                            <button class="btn btn-panel-admin py-3 px-4 w-150 shadow-sm fs-6 d-flex align-items-center justify-content-center mx-auto" data-bs-toggle="modal" data-bs-target="#modalPanelAdmin">
-                                <i class="fas fa-tools text-primary fa-lg me-2"></i> Panel de Soporte Técnico / Administrador
-                            </button>
+                    <div class="card card-custom p-4 p-md-5 bg-white position-relative">
+                        <div class="mb-3">
+                            <img src="mayito admin.jpeg" alt="Mayito Admin" class="avatar-admin mb-2" onerror="this.style.display='none'">
+                            <h2 class="fw-bold text-dark mb-1"><i class="fas fa-cubes text-primary me-2"></i>Sistema Web para Directorio de Módulos</h2>
+                            <p class="text-muted mb-4">Seleccione el módulo o apartado al que desea ingresar:</p>
                         </div>
 
-                        <div class="row g-3">
+                        <!-- 2 BOTONES PRINCIPALES ARRIBA -->
+                        <div class="row g-3 mb-4">
                             <div class="col-md-6">
-                                <div class="card card-custom p-4 h-100 border border-primary text-center bg-light cursor-pointer" onclick="cambiarVista('calendario')">
+                                <div class="card card-custom card-action-btn p-4 h-100 border border-primary text-center bg-light" onclick="cambiarVista('calendario')">
                                     <i class="fas fa-calendar-alt fa-3x text-primary mb-3"></i>
                                     <h4 class="fw-bold text-dark">Calendario Operativo</h4>
-                                    <p class="small text-muted mb-0">Gestión y asignación diaria de sedes por módulo y días festivos.</p>
+                                    <p class="small text-muted mb-0">Asignación de sedes para la campaña CAI 2026-2027.</p>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="card card-custom p-4 h-100 border border-success text-center bg-light cursor-pointer" onclick="cambiarVista('vaciado')">
+                                <div class="card card-custom card-action-btn p-4 h-100 border border-success text-center bg-light" onclick="cambiarVista('vaciado')">
                                     <i class="fas fa-file-excel fa-3x text-success mb-3"></i>
-                                    <h4 class="fw-bold text-dark">Vaciado Final</h4>
-                                    <p class="small text-muted mb-0">Generación automática de la tabla oficial con columnas de día inicial, final y horario.</p>
+                                    <h4 class="fw-bold text-dark">Directorio de Módulos con Coordenadas</h4>
+                                    <p class="small text-muted mb-0">Generación de tabla de directorio de módulos del Distrito 03 Coahuila.</p>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- BOTÓN DE ADMINISTRADOR ABAJO CON CONTRASEÑA -->
+                        <div>
+                            <button class="btn btn-dark py-2 px-4 shadow-sm fw-bold" onclick="solicitarPasswordAdmin()">
+                                <i class="fas fa-tools text-warning me-2"></i> Panel de Soporte Técnico / Administrador
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -250,7 +258,7 @@
                             <option value="050354">050354 - Móvil / Región Centro</option>
                         </select>
                         <div id="infoHorarioModulo" class="horario-info">
-                            <i class="fas fa-clock text-muted me-1"></i> <strong>Horario:</strong> Lunes a Sábado (08:00 AM - 03:00 PM)
+                            <i class="fas fa-calendar-check text-muted me-1"></i> <strong>Campaña CAI:</strong> <span id="rangoFechasVisual">No configurado</span>
                         </div>
                     </div>
                 </div>
@@ -268,7 +276,6 @@
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-calendar-day me-2 text-primary"></i>Calendario Operativo y Sedes</h5>
                     
-                    <!-- SELECTOR DE MESES ADAPTABLE PARA MÓVIL Y ESCRITORIO -->
                     <div class="w-100 d-md-none mt-2">
                         <select id="selectMesMovil" class="form-select form-select-sm border-primary fw-bold text-primary">
                             <option value="8">Septiembre 2026</option>
@@ -331,7 +338,7 @@
                 <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="cambiarVista('selector')">
                     <i class="fas fa-arrow-left me-1"></i> Regresar al Menú Principal
                 </button>
-                <h3 class="fw-bold text-dark mb-0 fs-5 fs-md-3"><i class="fas fa-file-excel text-success me-2"></i>Tabla de Vaciado Final (Oficial)</h3>
+                <h3 class="fw-bold text-dark mb-0 fs-5 fs-md-3"><i class="fas fa-file-excel text-success me-2"></i>Directorio de Módulos con Coordenadas</h3>
                 <div class="d-flex gap-2 flex-wrap">
                     <button class="btn btn-secondary btn-sm fw-bold" onclick="window.print()">
                         <i class="fas fa-print me-1"></i> Imprimir Tabla
@@ -363,7 +370,7 @@
     <!-- PIE DE PÁGINA (FOOTER) -->
     <footer>
         <div class="container">
-            <p class="mb-1">Sistema de Reportes - Directorio MACs &copy; 2026 Todos los derechos reservados.</p>
+            <p class="mb-1">Sistema Web para Directorio de Módulos &copy; 2026 Todos los derechos reservados.</p>
             <p class="mb-0 text-muted small">Diseñado y desarrollado por <strong class="text-light">Carrivers Design</strong></p>
         </div>
     </footer>
@@ -372,13 +379,15 @@
     <div class="modal fade" id="modalPanelAdmin" tabindex="-1">
         <div class="modal-dialog modal-xl modal-dialog-scrollable">
             <div class="modal-content">
-                <div class="modal-header bg-dark text-white">
-                    <h5 class="modal-title fw-bold"><i class="fas fa-tools text-warning me-2"></i>Panel de Soporte Técnico / Administrador</h5>
+                <div class="modal-header bg-dark text-white d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <img src="mayito admin.jpeg" alt="Mayito Admin" class="avatar-admin" style="width:35px;height:35px;" onerror="this.style.display='none'">
+                        <h5 class="modal-title fw-bold m-0"><i class="fas fa-tools text-warning me-2"></i>Panel de Soporte Técnico / Administrador</h5>
+                    </div>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body bg-light">
                     <div class="row g-4">
-                        <!-- Sección 1: Periodo de Campaña -->
                         <div class="col-md-6">
                             <div class="card card-custom p-3 h-100 border border-primary">
                                 <h6 class="fw-bold text-primary mb-3"><i class="fas fa-calendar-alt me-2"></i>Periodo Oficial de Campaña</h6>
@@ -395,7 +404,6 @@
                             </div>
                         </div>
 
-                        <!-- Sección 2: Gestión de Días Festivos / Hábiles Extra -->
                         <div class="col-md-6">
                             <div class="card card-custom p-3 h-100 border border-success">
                                 <h6 class="fw-bold text-success mb-2"><i class="fas fa-calendar-day me-2"></i>Gestión de Días Festivos y Extra</h6>
@@ -410,7 +418,6 @@
                             </div>
                         </div>
 
-                        <!-- Sección 3: Accesos Rápidos del Administrador -->
                         <div class="col-12">
                             <div class="card card-custom p-3 border-secondary">
                                 <h6 class="fw-bold text-dark mb-3"><i class="fas fa-cogs me-2"></i>Herramientas de Administración y Catálogos</h6>
@@ -421,7 +428,7 @@
                                     <button class="btn btn-outline-dark btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalListadoSedes">
                                         <i class="fas fa-list-ul me-1"></i> Listado de Sedes y Totales
                                     </button>
-                                    <button class="btn btn-danger btn-sm fw-bold ms-auto" onclick="reiniciarSistemaCompleto()">
+                                    <button class="btn btn-danger btn-sm fw-bold ms-auto" onclick="solicitarPasswordReinicioTotal()">
                                         <i class="fas fa-power-off me-1"></i> Reiniciar Sistema Total (Ceros)
                                     </button>
                                 </div>
@@ -431,6 +438,25 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar Panel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE ALERTA DE RESGUARDO DE CAMPAÑA -->
+    <div class="modal fade" id="modalAlertaResguardo" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-success">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-check-circle me-2"></i>¡Campaña Completada al 100%!</h5>
+                </div>
+                <div class="modal-body text-center p-4">
+                    <p class="fs-6 mb-3">Has capturado el total de días de la campaña. ¿Procedemos a hacer el respaldo de la información?</p>
+                    <p class="small text-muted mb-0">Nota: Recuerda que debes guardar el respaldo al terminar de capturar todos los días satisfactoriamente.</p>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-success px-4 fw-bold" onclick="ejecutarResguardoExitoso()">Sí, Respaldar</button>
+                    <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal" onclick="alert('Debes guardar el respaldo al terminar de capturar todos los días satisfactoriamente.')">Seguir configurando</button>
                 </div>
             </div>
         </div>
@@ -487,7 +513,12 @@
         <div class="modal-dialog modal-fullscreen">
             <div class="modal-content">
                 <div class="modal-header bg-dark text-white">
-                    <h5 class="modal-title fw-bold"><i class="fas fa-database me-2"></i>Gestor Maestro de Sedes</h5>
+                    <div class="d-flex align-items-center gap-3">
+                        <button class="btn btn-outline-light btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalPanelAdmin">
+                            <i class="fas fa-arrow-left me-1"></i> Regresar al Menú de Administrador
+                        </button>
+                        <h5 class="modal-title fw-bold m-0"><i class="fas fa-database me-2"></i>Gestor Maestro de Sedes</h5>
+                    </div>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body bg-light">
@@ -499,7 +530,7 @@
                             <button class="btn btn-secondary btn-sm fw-bold" onclick="importarCSV()"><i class="fas fa-upload me-1"></i> Subir Excel</button>
                         </div>
                         <button class="btn btn-info btn-sm fw-bold text-white ms-auto" onclick="sincronizarYActualizarTodo(true)"><i class="fas fa-sync-alt me-1"></i> Actualizar Sistema</button>
-                        <button class="btn btn-danger btn-sm fw-bold" onclick="reiniciarSistemaCompleto()"><i class="fas fa-power-off me-1"></i> Reiniciar Sistema Total</button>
+                        <button class="btn btn-danger btn-sm fw-bold" onclick="solicitarPasswordReinicioTotal()"><i class="fas fa-power-off me-1"></i> Reiniciar Sistema Total</button>
                     </div>
                     <div class="table-gestor-wrapper bg-white shadow-sm border rounded">
                         <table class="table table-hover table-bordered mb-0" id="tablaSedes">
@@ -517,7 +548,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title fw-bold" id="modalEditarRegistroTitulo">Formulario de Sede</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="editIndexSede">
@@ -548,7 +579,7 @@
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
 
-        // Control de Foco de Conexión en Icono de Credencial (Verde = En línea, Rojo = Fuera de línea)
+        // Control de Foco de Conexión en Icono de Credencial
         const connectedRef = ref(database, ".info/connected");
         onValue(connectedRef, (snap) => {
             const icon = document.getElementById('statusCredentialIcon');
@@ -575,6 +606,7 @@
         let diasFestivos = [];
         let diasHabilesExtra = [];
         let mesActivo = 8; 
+        let alertaResguardoMostrada = false;
 
         const columnasVaciado = [
             "CVE ENT", "CVE DTO", "CVE MPO", "NOMBRE MPIO", "CVE DE MODULO", 
@@ -587,6 +619,26 @@
             "050351": "Lunes a Sábado (08:00 AM - 03:00 PM)",
             "050353": "Lunes a Viernes (09:00 AM - 04:00 PM)",
             "050354": "Lunes a Viernes (09:00 AM - 04:00 PM)"
+        };
+
+        // Solicitar Contraseña de Administrador (charro) para abrir panel
+        window.solicitarPasswordAdmin = function() {
+            let pass = prompt("Ingrese la contraseña de Administrador:");
+            if (pass === "charro") {
+                new bootstrap.Modal(document.getElementById('modalPanelAdmin')).show();
+            } else if (pass !== null) {
+                alert("Contraseña incorrecta.");
+            }
+        };
+
+        // Solicitar Contraseña para Reinicio Total
+        window.solicitarPasswordReinicioTotal = function() {
+            let pass = prompt("⚠️ Acción protegida. Ingrese la contraseña de Administrador para confirmar el Reinicio Total:");
+            if (pass === "charro") {
+                reiniciarSistemaCompleto();
+            } else if (pass !== null) {
+                alert("Contraseña incorrecta. Operación cancelada.");
+            }
         };
 
         window.cambiarVista = function(vista) {
@@ -624,7 +676,7 @@
         };
 
         window.reiniciarSistemaCompleto = async function() {
-            if (confirm("⚠️ ¿Estás seguro de reiniciar todo el sistema? Se borrarán todas las asignaciones, fechas, días festivos y el catálogo de Firebase, dejándolo completamente en blanco.")) {
+            if (confirm("⚠️ ¿Estás completamente seguro? Se borrarán todas las asignaciones, fechas, días festivos y el catálogo, dejando el sistema en ceros.")) {
                 try {
                     await set(ref(database, 'catalogoSedes'), null);
                     await set(ref(database, 'directorioMACs'), null);
@@ -683,7 +735,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             renderHeaderGestor();
-            actualizarInfoHorario();
+            actualizarRangoVisualCampania();
             setupMesButtons();
             
             onValue(ref(database, 'configuracionCampania'), async (snap) => {
@@ -694,6 +746,7 @@
                     fIniInput.value = cfg.inicio || "";
                     fFinInput.value = cfg.fin || "";
                 }
+                actualizarRangoVisualCampania();
                 verificarYPrellenarFijo();
                 renderCalendar();
                 actualizarResumen();
@@ -716,6 +769,7 @@
                 verificarYPrellenarFijo();
                 renderCalendar();
                 actualizarResumen();
+                verificarCampaniaCompleta();
             });
 
             onValue(ref(database, 'catalogoSedes'), (snapshot) => {
@@ -728,7 +782,6 @@
             });
 
             document.getElementById('selectModulo').addEventListener('change', () => {
-                actualizarInfoHorario();
                 renderCalendar();
                 actualizarResumen();
             });
@@ -737,6 +790,7 @@
                 const inicio = document.getElementById('fechaInicio').value;
                 const fin = document.getElementById('fechaFin').value;
                 await set(ref(database, 'configuracionCampania'), { inicio, fin });
+                actualizarRangoVisualCampania();
                 verificarYPrellenarFijo();
                 renderCalendar();
                 actualizarResumen();
@@ -795,6 +849,7 @@
                 bootstrap.Modal.getInstance(document.getElementById('modalAsignarSede')).hide();
                 renderCalendar();
                 actualizarResumen();
+                verificarCampaniaCompleta();
             });
 
             document.getElementById('selectSedeModal').addEventListener('change', (e) => {
@@ -808,6 +863,56 @@
             document.getElementById('modalListadoSedes').addEventListener('show.bs.modal', actualizarModalListadoSedes);
             renderFestivos();
         });
+
+        function actualizarRangoVisualCampania() {
+            const ini = document.getElementById('fechaInicio').value;
+            const fin = document.getElementById('fechaFin').value;
+            const spanVisual = document.getElementById('rangoFechasVisual');
+            if (ini && fin) {
+                spanVisual.innerText = `${formatearFechaDDMMYYYY(ini)} al ${formatearFechaDDMMYYYY(fin)}`;
+            } else {
+                spanVisual.innerText = "No configurado (Establecer en Panel Admin)";
+            }
+        }
+
+        function verificarCampaniaCompleta() {
+            const fIniStr = document.getElementById('fechaInicio').value;
+            const fFinStr = document.getElementById('fechaFin').value;
+            if (!fIniStr || !fFinStr || alertaResguardoMostrada) return;
+
+            const inicioCamp = new Date(fIniStr + "T00:00:00");
+            const finCamp = new Date(fFinStr + "T00:00:00");
+            const modulos = ["050351", "050353", "050354"];
+            
+            let totalHabilesEsperados = 0;
+            let totalCapturados = 0;
+
+            modulos.forEach(modCVE => {
+                let curr = new Date(inicioCamp);
+                while(curr <= finCamp) {
+                    const fStr = curr.toISOString().split('T')[0];
+                    if (esDiaHabil(fStr, modCVE)) {
+                        totalHabilesEsperados++;
+                        const dbKey = `${modCVE}_${fStr.replace(/-/g, '_')}`;
+                        if (dbRegistros[dbKey]?.identificadorSede) {
+                            totalCapturados++;
+                        }
+                    }
+                    curr.setDate(curr.getDate() + 1);
+                }
+            });
+
+            if (totalHabilesEsperados > 0 && totalCapturados >= totalHabilesEsperados) {
+                alertaResguardoMostrada = true;
+                new bootstrap.Modal(document.getElementById('modalAlertaResguardo')).show();
+            }
+        }
+
+        window.ejecutarResguardoExitoso = function() {
+            bootstrap.Modal.getInstance(document.getElementById('modalAlertaResguardo')).hide();
+            exportarListadoSedesTxt();
+            alert("¡Respaldo generado y descargado correctamente con éxito!");
+        };
 
         window.eliminarFestivo = async function(fecha) {
             diasFestivos = diasFestivos.filter(d => d !== fecha);
@@ -943,7 +1048,8 @@
         }
 
         window.importarCSV = function() {
-            const file = document.getElementById('inputCsvUpload').files[0];
+            const fileInput = document.getElementById('inputCsvUpload');
+            const file = fileInput.files[0];
             if (!file) return;
             const reader = new FileReader();
             reader.readAsText(file, "UTF-8");
@@ -965,6 +1071,7 @@
                     try {
                         await set(ref(database, 'catalogoSedes'), catalogoSedes);
                         renderEditorSedes();
+                        fileInput.value = ""; // Limpia el cuadro de selección de archivo tras subirlo con éxito
                         alert("¡Catálogo importado y guardado en la nube con éxito!");
                     } catch (err) {
                         console.error("Error al guardar CSV en Firebase:", err);
@@ -973,11 +1080,6 @@
                 }
             };
         };
-
-        function actualizarInfoHorario() {
-            const mod = document.getElementById('selectModulo').value;
-            document.getElementById('infoHorarioModulo').innerHTML = `<i class="fas fa-clock text-muted me-1"></i> <strong>Horario:</strong> ${horariosTexto[mod]}`;
-        }
 
         function setupMesButtons() {
             document.querySelectorAll('#mesSelectorBtns button').forEach(btn => {
@@ -1265,7 +1367,7 @@
             });
 
             if (filasGeneradas.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="${columnasVaciado.length}" class="text-center py-4 text-muted fst-italic">No hay datos suficientes para el vaciado final. Asigne sedes en los calendarios.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="${columnasVaciado.length}" class="text-center py-4 text-muted fst-italic">No hay datos suficientes para el directorio. Asigne sedes en los calendarios.</td></tr>`;
                 return;
             }
 
@@ -1312,7 +1414,7 @@
             });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }));
-            link.download = "vaciado_final_oficial.csv";
+            link.download = "directorio_modulos_distrito03.csv";
             link.click();
         };
     </script>
