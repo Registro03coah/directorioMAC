@@ -135,7 +135,7 @@
         <div class="container-fluid">
             <a class="navbar-brand" href="#"><i class="fas fa-id-card me-2"></i>Directorio MACs (Cloud)</a>
             <div class="d-flex align-items-center">
-                <span class="navbar-text text-light small me-3 d-none d-md-block">Versión 12.4 - Control de Campaña y Fechas Hábiles/Inhábiles</span>
+                <span class="navbar-text text-light small me-3 d-none d-md-block">Versión 12.5 - Importador CSV Robusto</span>
                 <button class="btn btn-warning btn-sm fw-bold shadow-sm me-2" type="button" data-bs-toggle="modal" data-bs-target="#modalGestorSedes">
                     <i class="fas fa-edit me-1"></i> Editor Sedes
                 </button>
@@ -748,27 +748,54 @@
             link.click();
         };
 
+        // PARSER CSV ROBUSTO (Soporte completo para comillas y textos con comas/saltos)
+        function parseCSVLine(text) {
+            let result = [];
+            let cell = '';
+            let inQuotes = false;
+            for (let i = 0; i < text.length; i++) {
+                let char = text[i];
+                let nextChar = text[i + 1];
+                if (char === '"') {
+                    if (inQuotes && nextChar === '"') {
+                        cell += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    result.push(cell.trim());
+                    cell = '';
+                } else {
+                    cell += char;
+                }
+            }
+            result.push(cell.trim());
+            return result;
+        }
+
         window.importarCSV = function() {
             const file = document.getElementById('inputCsvUpload').files[0];
             if (!file) return;
             const reader = new FileReader();
             reader.readAsText(file, "UTF-8");
             reader.onload = function(e) {
-                const rows = e.target.result.split('\n');
-                if(rows.length > 1) {
-                    if(confirm("¿Reemplazar catálogo?")) catalogoSedes = [];
-                    for(let i=1; i<rows.length; i++){
-                        if(rows[i].trim() !== ""){
-                            let vals = rows[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
-                            if(vals) {
-                                vals = vals.map(v => v.replace(/^"|"$/g, '').replace(/""/g, '"'));
-                                while(vals.length < columnasSedes.length) vals.push("");
-                                catalogoSedes.push(vals.slice(0, columnasSedes.length));
-                            }
+                const text = e.target.result;
+                const lines = text.split(/\r\n|\n/);
+                if (lines.length > 1) {
+                    if (confirm("¿Reemplazar catálogo actual con el archivo importado?")) catalogoSedes = [];
+                    for (let i = 1; i < lines.length; i++) {
+                        let line = lines[i].trim();
+                        if (line !== "") {
+                            let vals = parseCSVLine(line);
+                            // Limpiar comillas envolventes si las hay
+                            vals = vals.map(v => v.replace(/^"|"$/g, '').trim());
+                            while (vals.length < columnasSedes.length) vals.push("");
+                            catalogoSedes.push(vals.slice(0, columnasSedes.length));
                         }
                     }
                     renderEditorSedes();
-                    alert("Importación completada con éxito.");
+                    alert("¡Catálogo importado con éxito, textos y direcciones completos!");
                 }
             };
         };
@@ -815,7 +842,6 @@
                 const cell = document.createElement('div');
                 cell.className = `calendar-cell theme-${moduloActual}`;
 
-                // Verificar si está dentro del rango de campaña
                 let fueraDeCampaña = false;
                 if (dtInicioCamp && dtFinCamp) {
                     if (dtActual < dtInicioCamp || dtActual > dtFinCamp) {
@@ -869,7 +895,6 @@
             obtenerSedesPorModulo(moduloActual).forEach(s => {
                 const opt = document.createElement('option');
                 opt.value = s[0];
-                // Mostrar identificador de sede claramente en la lista
                 opt.textContent = `[${s[0]}] — ${s[10]} (${s[11]})`;
                 if (dbRegistros[dbKey]?.identificadorSede === s[0]) opt.selected = true;
                 selectSede.appendChild(opt);
