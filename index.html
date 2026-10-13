@@ -35,21 +35,21 @@
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 8px;
+            gap: 6px;
         }
         .calendar-day-header {
             text-align: center;
             font-weight: 600;
             color: #6c757d;
-            font-size: 0.85rem;
-            padding: 5px 0;
+            font-size: 0.8rem;
+            padding: 4px 0;
         }
         .calendar-cell {
             background: #ffffff;
             border: 1px solid #dee2e6;
             border-radius: 6px;
-            min-height: 95px;
-            padding: 6px;
+            min-height: 85px;
+            padding: 4px;
             cursor: pointer;
             transition: all 0.2s;
             display: flex;
@@ -88,14 +88,14 @@
 
         .day-number {
             font-weight: bold;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
         .badge-sede {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             white-space: normal;
             word-break: break-word;
             text-align: left;
-            padding: 4px;
+            padding: 3px;
             border-radius: 4px;
         }
         .horario-info {
@@ -140,26 +140,35 @@
             padding: 15px 0;
             margin-top: auto;
         }
-        .firebase-status {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.75rem;
-            background: rgba(255,255,255,0.1);
-            padding: 4px 10px;
-            border-radius: 20px;
+        
+        /* Indicador de conexión con sombra verde/roja en icono de credencial */
+        .status-credential-icon {
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
         }
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background-color: #dc3545;
-            display: inline-block;
-            box-shadow: 0 0 5px currentColor;
+        .status-credential-icon.connected {
+            color: #28a745;
+            filter: drop-shadow(0 0 6px #28a745);
         }
-        .status-dot.connected {
-            background-color: #28a745;
+        .status-credential-icon.disconnected {
+            color: #dc3545;
+            filter: drop-shadow(0 0 6px #dc3545);
         }
+
+        /* Botón de panel técnico estilo imagen */
+        .btn-panel-admin {
+            background-color: #f8f9fa;
+            border: 1px solid #ced4da;
+            color: #212529;
+            font-weight: 600;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+        }
+        .btn-panel-admin:hover {
+            background-color: #e9ecef;
+            border-color: #adb5bd;
+        }
+
         @media print {
             body { background: white; padding-top: 0; }
             .no-print { display: none !important; }
@@ -173,32 +182,33 @@
     <!-- Navbar Fija -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm no-print">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#"><i class="fas fa-id-card me-2"></i>Directorio MACs (Cloud)</a>
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <i class="fas fa-id-card me-2 status-credential-icon disconnected" id="statusCredentialIcon" title="Estado de Conexión"></i>
+                <span>Directorio MACs</span>
+            </a>
             <div class="d-flex align-items-center">
-                <div class="firebase-status text-white me-3 d-none d-md-flex" id="firebaseStatusBadge">
-                    <span class="status-dot" id="statusDot"></span>
-                    <span id="statusText">Conectando a Firebase...</span>
-                </div>
-                <span class="navbar-text text-light small me-3 d-none d-lg-block">Versión 16.0</span>
-                <button class="btn btn-warning btn-sm fw-bold shadow-sm me-2" type="button" data-bs-toggle="modal" data-bs-target="#modalGestorSedes">
-                    <i class="fas fa-edit me-1"></i> Editor Sedes
-                </button>
-                <button class="btn btn-danger btn-sm fw-bold shadow-sm" type="button" onclick="reiniciarSistemaCompleto()">
-                    <i class="fas fa-power-off me-1"></i> Reiniciar Sistema Total
-                </button>
+                <span class="navbar-text text-light small me-2 fw-bold">v17.0</span>
             </div>
         </div>
     </nav>
 
     <div class="main-content">
-        <!-- PANTALLA 1: SELECTOR DE VISTA (HOME) -->
+        <!-- PANTALLA 1: SELECTOR DE VISTA (HOME CON CENTRO DE MANDO) -->
         <div id="vistaSelector" class="container my-5 view-section active">
             <div class="row justify-content-center">
                 <div class="col-md-8 text-center">
-                    <div class="card card-custom p-5 bg-white">
+                    <div class="card card-custom p-4 p-md-5 bg-white">
                         <h2 class="fw-bold text-dark mb-3"><i class="fas fa-cubes text-primary me-2"></i>Sistema de Control Operativo</h2>
                         <p class="text-muted mb-4">Seleccione el módulo o apartado al que desea ingresar:</p>
-                        <div class="row g-4">
+                        
+                        <!-- BOTÓN DE PANEL DE SOPORTE TÉCNICO / ADMINISTRADOR (NUEVO) -->
+                        <div class="mb-4">
+                            <button class="btn btn-panel-admin py-3 px-4 w-150 shadow-sm fs-6 d-flex align-items-center justify-content-center mx-auto" data-bs-toggle="modal" data-bs-target="#modalPanelAdmin">
+                                <i class="fas fa-tools text-primary fa-lg me-2"></i> Panel de Soporte Técnico / Administrador
+                            </button>
+                        </div>
+
+                        <div class="row g-3">
                             <div class="col-md-6">
                                 <div class="card card-custom p-4 h-100 border border-primary text-center bg-light cursor-pointer" onclick="cambiarVista('calendario')">
                                     <i class="fas fa-calendar-alt fa-3x text-primary mb-3"></i>
@@ -221,7 +231,7 @@
 
         <!-- PANTALLA 2: CALENDARIO OPERATIVO -->
         <div id="vistaCalendario" class="container my-4 view-section">
-            <div class="d-flex justify-content-between align-items-center mb-3 no-print">
+            <div class="d-flex justify-content-between align-items-center mb-3 no-print flex-wrap gap-2">
                 <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="cambiarVista('selector')">
                     <i class="fas fa-arrow-left me-1"></i> Regresar al Menú Principal
                 </button>
@@ -231,7 +241,7 @@
             </div>
             
             <div class="row g-3 mb-4">
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <div class="card card-custom p-3 h-100">
                         <label for="selectModulo" class="form-label fw-bold text-primary"><i class="fas fa-building me-1"></i> Seleccionar Módulo</label>
                         <select id="selectModulo" class="form-select mb-2">
@@ -239,45 +249,13 @@
                             <option value="050353">050353 - Semifijo / Norte</option>
                             <option value="050354">050354 - Móvil / Región Centro</option>
                         </select>
-                        
-                        <div id="infoHorarioModulo" class="horario-info mb-3">
+                        <div id="infoHorarioModulo" class="horario-info">
                             <i class="fas fa-clock text-muted me-1"></i> <strong>Horario:</strong> Lunes a Sábado (08:00 AM - 03:00 PM)
                         </div>
-
-                        <label class="form-label fw-bold small text-secondary"><i class="fas fa-calendar-alt me-1"></i> Periodo de Campaña</label>
-                        <div class="row g-2">
-                            <div class="col-6">
-                                <input type="date" id="fechaInicio" class="form-control form-control-sm">
-                            </div>
-                            <div class="col-6">
-                                <input type="date" id="fechaFin" class="form-control form-control-sm">
-                            </div>
-                        </div>
                     </div>
                 </div>
 
-                <!-- CUADRO VERDE: GESTIÓN UNIFICADA DE DÍAS (FESTIVOS / HÁBILES EXTRA) -->
-                <div class="col-md-4">
-                    <div class="card card-custom p-3 h-100 d-flex flex-column justify-content-between border border-success">
-                        <div>
-                            <label class="form-label fw-bold text-success mb-1 small"><i class="fas fa-calendar-day me-1"></i> Gestión de Días Festivos / Hábiles Extra</label>
-                            <div class="input-group input-group-sm mb-2">
-                                <input type="date" id="inputFechaUnica" class="form-control">
-                                <button class="btn btn-danger" type="button" id="btnHacerInhabil" title="Marcar como Inhábil"><i class="fas fa-ban me-1"></i> Inhábil</button>
-                                <button class="btn btn-primary" type="button" id="btnHacerExtraHabil" title="Marcar como Hábil Extra"><i class="fas fa-calendar-plus me-1"></i> Hábil Extra</button>
-                            </div>
-                            <div style="max-height: 80px; overflow-y: auto;" id="listaFestivos" class="border rounded p-1 bg-light small mb-2">
-                                <span class="text-muted fst-italic">Sin días registrados.</span>
-                            </div>
-                        </div>
-                        <!-- CUADRO MORADO: BOTÓN DE LISTADO DE SEDES Y TOTALES -->
-                        <button class="btn btn-outline-dark btn-sm w-100 fw-bold border-2 border-dark" data-bs-toggle="modal" data-bs-target="#modalListadoSedes">
-                            <i class="fas fa-list-ul me-1"></i> Listado de Sedes y Totales
-                        </button>
-                    </div>
-                </div>
-
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <div class="card card-custom p-3 h-100 bg-primary text-white d-flex flex-column justify-content-center align-items-center text-center">
                         <h6 class="text-uppercase tracking-wider mb-1"><i class="fas fa-clipboard-check me-1"></i> Total Días Trabajados</h6>
                         <h2 class="display-5 fw-bold mb-0" id="totalDiasTrabajados">0</h2>
@@ -287,25 +265,36 @@
             </div>
 
             <div class="card card-custom mb-4">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-calendar-day me-2 text-primary"></i>Calendario Operativo y Sedes</h5>
-                    <div class="btn-group no-print" role="group" id="mesSelectorBtns">
-                        <button type="button" class="btn btn-outline-primary active" data-mes="8">Septiembre</button>
-                        <button type="button" class="btn btn-outline-primary" data-mes="9">Octubre</button>
-                        <button type="button" class="btn btn-outline-primary" data-mes="10">Noviembre</button>
-                        <button type="button" class="btn btn-outline-primary" data-mes="11">Diciembre</button>
-                        <button type="button" class="btn btn-outline-primary" data-mes="0">Enero (2027)</button>
+                    
+                    <!-- SELECTOR DE MESES ADAPTABLE PARA MÓVIL Y ESCRITORIO -->
+                    <div class="w-100 d-md-none mt-2">
+                        <select id="selectMesMovil" class="form-select form-select-sm border-primary fw-bold text-primary">
+                            <option value="8">Septiembre 2026</option>
+                            <option value="9">Octubre 2026</option>
+                            <option value="10">Noviembre 2026</option>
+                            <option value="11">Diciembre 2026</option>
+                            <option value="0">Enero 2027</option>
+                        </select>
+                    </div>
+                    <div class="btn-group no-print d-none d-md-flex flex-wrap" role="group" id="mesSelectorBtns">
+                        <button type="button" class="btn btn-outline-primary btn-sm active" data-mes="8">Septiembre</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm" data-mes="9">Octubre</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm" data-mes="10">Noviembre</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm" data-mes="11">Diciembre</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm" data-mes="0">Enero (2027)</button>
                     </div>
                 </div>
                 <div class="card-body">
                     <div class="calendar-grid mb-2">
                         <div class="calendar-day-header text-danger">Dom</div>
-                        <div class="calendar-day-header">Lunes</div>
-                        <div class="calendar-day-header">Martes</div>
-                        <div class="calendar-day-header">Miércoles</div>
-                        <div class="calendar-day-header">Jueves</div>
-                        <div class="calendar-day-header">Viernes</div>
-                        <div class="calendar-day-header">Sábado</div>
+                        <div class="calendar-day-header">Lun</div>
+                        <div class="calendar-day-header">Mar</div>
+                        <div class="calendar-day-header">Mié</div>
+                        <div class="calendar-day-header">Jue</div>
+                        <div class="calendar-day-header">Vie</div>
+                        <div class="calendar-day-header">Sáb</div>
                     </div>
                     <div class="calendar-grid" id="calendarGrid"></div>
                 </div>
@@ -338,20 +327,20 @@
 
         <!-- PANTALLA 3: VACIADO FINAL -->
         <div id="vistaVaciado" class="container-fluid my-4 view-section px-4">
-            <div class="d-flex justify-content-between align-items-center mb-3 no-print">
+            <div class="d-flex justify-content-between align-items-center mb-3 no-print flex-wrap gap-2">
                 <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="cambiarVista('selector')">
                     <i class="fas fa-arrow-left me-1"></i> Regresar al Menú Principal
                 </button>
-                <h3 class="fw-bold text-dark mb-0"><i class="fas fa-file-excel text-success me-2"></i>Tabla de Vaciado Final (Oficial)</h3>
-                <div>
-                    <button class="btn btn-secondary btn-sm fw-bold me-2" onclick="window.print()">
+                <h3 class="fw-bold text-dark mb-0 fs-5 fs-md-3"><i class="fas fa-file-excel text-success me-2"></i>Tabla de Vaciado Final (Oficial)</h3>
+                <div class="d-flex gap-2 flex-wrap">
+                    <button class="btn btn-secondary btn-sm fw-bold" onclick="window.print()">
                         <i class="fas fa-print me-1"></i> Imprimir Tabla
                     </button>
-                    <button class="btn btn-info btn-sm fw-bold text-white me-2" onclick="sincronizarYActualizarTodo()">
-                        <i class="fas fa-sync-alt me-1"></i> Actualizar Tablas
+                    <button class="btn btn-info btn-sm fw-bold text-white" onclick="sincronizarYActualizarTodo()">
+                        <i class="fas fa-sync-alt me-1"></i> Actualizar
                     </button>
                     <button class="btn btn-success btn-sm fw-bold" onclick="exportarVaciadoCSV()">
-                        <i class="fas fa-download me-1"></i> Descargar CSV
+                        <i class="fas fa-download me-1"></i> CSV
                     </button>
                 </div>
             </div>
@@ -374,12 +363,80 @@
     <!-- PIE DE PÁGINA (FOOTER) -->
     <footer>
         <div class="container">
-            <p class="mb-1">Sistema de Reportes - Directorio MACs (Cloud) &copy; 2026 Todos los derechos reservados.</p>
+            <p class="mb-1">Sistema de Reportes - Directorio MACs &copy; 2026 Todos los derechos reservados.</p>
             <p class="mb-0 text-muted small">Diseñado y desarrollado por <strong class="text-light">Carrivers Design</strong></p>
         </div>
     </footer>
 
-    <!-- Modales -->
+    <!-- MODAL CENTRO DE MANDO: PANEL DE SOPORTE TÉCNICO / ADMINISTRADOR -->
+    <div class="modal fade" id="modalPanelAdmin" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-tools text-warning me-2"></i>Panel de Soporte Técnico / Administrador</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body bg-light">
+                    <div class="row g-4">
+                        <!-- Sección 1: Periodo de Campaña -->
+                        <div class="col-md-6">
+                            <div class="card card-custom p-3 h-100 border border-primary">
+                                <h6 class="fw-bold text-primary mb-3"><i class="fas fa-calendar-alt me-2"></i>Periodo Oficial de Campaña</h6>
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <label class="form-label small fw-bold text-muted">Fecha Inicio</label>
+                                        <input type="date" id="fechaInicio" class="form-control form-control-sm">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small fw-bold text-muted">Fecha Fin</label>
+                                        <input type="date" id="fechaFin" class="form-control form-control-sm">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sección 2: Gestión de Días Festivos / Hábiles Extra -->
+                        <div class="col-md-6">
+                            <div class="card card-custom p-3 h-100 border border-success">
+                                <h6 class="fw-bold text-success mb-2"><i class="fas fa-calendar-day me-2"></i>Gestión de Días Festivos y Extra</h6>
+                                <div class="input-group input-group-sm mb-2">
+                                    <input type="date" id="inputFechaUnica" class="form-control">
+                                    <button class="btn btn-danger" type="button" id="btnHacerInhabil" title="Marcar como Inhábil"><i class="fas fa-ban me-1"></i> Inhábil</button>
+                                    <button class="btn btn-primary" type="button" id="btnHacerExtraHabil" title="Marcar como Hábil Extra"><i class="fas fa-calendar-plus me-1"></i> Extra</button>
+                                </div>
+                                <div style="max-height: 80px; overflow-y: auto;" id="listaFestivos" class="border rounded p-1 bg-white small">
+                                    <span class="text-muted fst-italic">Sin días registrados.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sección 3: Accesos Rápidos del Administrador -->
+                        <div class="col-12">
+                            <div class="card card-custom p-3 border-secondary">
+                                <h6 class="fw-bold text-dark mb-3"><i class="fas fa-cogs me-2"></i>Herramientas de Administración y Catálogos</h6>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button class="btn btn-outline-primary btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalGestorSedes">
+                                        <i class="fas fa-database me-1"></i> Abrir Editor Maestro de Sedes
+                                    </button>
+                                    <button class="btn btn-outline-dark btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalListadoSedes">
+                                        <i class="fas fa-list-ul me-1"></i> Listado de Sedes y Totales
+                                    </button>
+                                    <button class="btn btn-danger btn-sm fw-bold ms-auto" onclick="reiniciarSistemaCompleto()">
+                                        <i class="fas fa-power-off me-1"></i> Reiniciar Sistema Total (Ceros)
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar Panel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modales Secundarios -->
     <div class="modal fade" id="modalAsignarSede" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -441,7 +498,7 @@
                             <input class="form-control form-control-sm me-2" type="file" id="inputCsvUpload" accept=".csv" style="max-width: 250px;">
                             <button class="btn btn-secondary btn-sm fw-bold" onclick="importarCSV()"><i class="fas fa-upload me-1"></i> Subir Excel</button>
                         </div>
-                        <button class="btn btn-info btn-sm fw-bold text-white ms-auto" onclick="sincronizarYActualizarTodo(true)"><i class="fas fa-sync-alt me-1"></i> Actualizar Todo el Sistema</button>
+                        <button class="btn btn-info btn-sm fw-bold text-white ms-auto" onclick="sincronizarYActualizarTodo(true)"><i class="fas fa-sync-alt me-1"></i> Actualizar Sistema</button>
                         <button class="btn btn-danger btn-sm fw-bold" onclick="reiniciarSistemaCompleto()"><i class="fas fa-power-off me-1"></i> Reiniciar Sistema Total</button>
                     </div>
                     <div class="table-gestor-wrapper bg-white shadow-sm border rounded">
@@ -491,17 +548,18 @@
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
 
-        // Control de Foco de Conexión en la Navbar
+        // Control de Foco de Conexión en Icono de Credencial (Verde = En línea, Rojo = Fuera de línea)
         const connectedRef = ref(database, ".info/connected");
         onValue(connectedRef, (snap) => {
-            const dot = document.getElementById('statusDot');
-            const text = document.getElementById('statusText');
+            const icon = document.getElementById('statusCredentialIcon');
             if (snap.val() === true) {
-                dot.classList.add('connected');
-                text.innerText = "Firebase Conectado";
+                icon.classList.remove('disconnected');
+                icon.classList.add('connected');
+                icon.title = "Conectado a Firebase (En línea)";
             } else {
-                dot.classList.remove('connected');
-                text.innerText = "Desconectado";
+                icon.classList.remove('connected');
+                icon.classList.add('disconnected');
+                icon.title = "Desconectado de Firebase (Fuera de línea)";
             }
         });
 
@@ -560,11 +618,11 @@
             renderVaciadoFinal();
             if (desdeEditor) {
                 bootstrap.Modal.getInstance(document.getElementById('modalGestorSedes'))?.hide();
+                bootstrap.Modal.getInstance(document.getElementById('modalPanelAdmin'))?.hide();
             }
             alert("¡Sistema actualizado correctamente con las sedes y datos vigentes!");
         };
 
-        // --- BOTÓN DE REINICIO TOTAL (LIMPIA FIREBASE POR COMPLETO) ---
         window.reiniciarSistemaCompleto = async function() {
             if (confirm("⚠️ ¿Estás seguro de reiniciar todo el sistema? Se borrarán todas las asignaciones, fechas, días festivos y el catálogo de Firebase, dejándolo completamente en blanco.")) {
                 try {
@@ -628,7 +686,6 @@
             actualizarInfoHorario();
             setupMesButtons();
             
-            // Sincronizar Configuración de Campaña
             onValue(ref(database, 'configuracionCampania'), async (snap) => {
                 const cfg = snap.val();
                 const fIniInput = document.getElementById('fechaInicio');
@@ -642,7 +699,6 @@
                 actualizarResumen();
             });
 
-            // Sincronizar Días Festivos
             onValue(ref(database, 'diasFestivosCustom'), (snap) => {
                 diasFestivos = snap.val() || [];
                 renderFestivos();
@@ -655,7 +711,6 @@
                 renderCalendar();
             });
 
-            // Sincronizar Asignaciones
             onValue(ref(database, 'directorioMACs'), (snapshot) => {
                 dbRegistros = snapshot.val() || {};
                 verificarYPrellenarFijo();
@@ -663,7 +718,6 @@
                 actualizarResumen();
             });
 
-            // Sincronizar Catálogo de Sedes (Soporta borrado completo)
             onValue(ref(database, 'catalogoSedes'), (snapshot) => {
                 const data = snapshot.val();
                 catalogoSedes = data ? data : [];
@@ -845,7 +899,6 @@
             if(confirm("¿Eliminar esta sede?")) { 
                 catalogoSedes.splice(i, 1); 
                 try {
-                    // Si el catálogo queda vacío, enviamos null para borrarlo en Firebase
                     const payload = catalogoSedes.length > 0 ? catalogoSedes : null;
                     await set(ref(database, 'catalogoSedes'), payload);
                 } catch (e) {
@@ -932,8 +985,18 @@
                     document.querySelectorAll('#mesSelectorBtns button').forEach(b => b.classList.remove('active'));
                     e.target.classList.add('active');
                     mesActivo = parseInt(e.target.getAttribute('data-mes'));
+                    document.getElementById('selectMesMovil').value = mesActivo;
                     renderCalendar();
                 });
+            });
+
+            document.getElementById('selectMesMovil').addEventListener('change', (e) => {
+                mesActivo = parseInt(e.target.value);
+                document.querySelectorAll('#mesSelectorBtns button').forEach(b => {
+                    if (parseInt(b.getAttribute('data-mes')) === mesActivo) b.classList.add('active');
+                    else b.classList.remove('active');
+                });
+                renderCalendar();
             });
         }
 
@@ -986,15 +1049,15 @@
 
                 let html = `<div class="day-number">${dia}</div>`;
                 if (fueraDeCampaña) {
-                    html += `<span class="text-muted fst-italic" style="font-size:0.65rem;">Fuera de rango</span>`;
+                    html += `<span class="text-muted fst-italic" style="font-size:0.6rem;">Fuera de rango</span>`;
                 } else if (isFestivo && !isExtraHabil) {
                     html += `<span class="badge bg-danger badge-sede mt-1">Festivo</span>`;
                 } else if (!habil) {
-                    html += `<span class="text-muted fst-italic" style="font-size:0.7rem;">Inhábil</span>`;
+                    html += `<span class="text-muted fst-italic" style="font-size:0.65rem;">Inhábil</span>`;
                 } else if (dbRegistros[dbKey]?.identificadorSede) {
                     html += `<span class="badge badge-sede badge-sede-${moduloActual} mt-1 fw-bold">${dbRegistros[dbKey].identificadorSede}</span>`;
                 } else {
-                    html += `<span class="text-primary fw-bold fst-italic" style="font-size:0.75rem;"><i class="fas fa-plus-circle"></i> Asignar</span>`;
+                    html += `<span class="text-primary fw-bold fst-italic" style="font-size:0.7rem;"><i class="fas fa-plus-circle"></i> Asignar</span>`;
                 }
                 cell.innerHTML = html;
 
@@ -1158,7 +1221,7 @@
             const fIniStr = document.getElementById('fechaInicio').value;
             const fFinStr = document.getElementById('fechaFin').value;
             if (!fIniStr || !fFinStr) {
-                tbody.innerHTML = `<tr><td colspan="${columnasVaciado.length}" class="text-center py-4 text-muted fst-italic">Configure las fechas de campaña en el calendario operativo.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="${columnasVaciado.length}" class="text-center py-4 text-muted fst-italic">Configure las fechas de campaña en el Panel de Administración.</td></tr>`;
                 return;
             }
 
