@@ -12,7 +12,7 @@
         body {
             background-color: #f4f6f9;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            padding-top: 70px; /* Espacio para la barra fija */
+            padding-top: 70px;
         }
         .navbar {
             position: fixed;
@@ -49,6 +49,7 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            position: relative;
         }
         .calendar-cell:hover:not(.disabled) {
             background-color: #f8f9fa;
@@ -57,19 +58,23 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
         .calendar-cell.disabled {
-            background-color: #ffffff;
+            background-color: #f8f9fa;
             color: #adb5bd;
             cursor: not-allowed;
             border: 1px dashed #dee2e6;
         }
         .calendar-cell.festive {
-            background-color: #ffe3e3;
-            border-color: #ff8787;
+            background-color: #ffe3e3 !important;
+            border-color: #ff8787 !important;
+        }
+        .calendar-cell.extra-habil {
+            background-color: #e7f5ff !important;
+            border-color: #74c0fc !important;
         }
         
-        .theme-050351 { background-color: #f0f7ff !important; border-color: #cfe2ff !important; } 
-        .theme-050353 { background-color: #fff9e6 !important; border-color: #ffe8a1 !important; } 
-        .theme-050354 { background-color: #e8f5e9 !important; border-color: #c8e6c9 !important; } 
+        .theme-050351 { background-color: #f0f7ff; border-color: #cfe2ff; } 
+        .theme-050353 { background-color: #fff9e6; border-color: #ffe8a1; } 
+        .theme-050354 { background-color: #e8f5e9; border-color: #c8e6c9; } 
 
         .badge-sede-050351 { background-color: #0d6efd !important; color: #ffffff !important; }
         .badge-sede-050353 { background-color: #fd7e14 !important; color: #ffffff !important; }
@@ -84,7 +89,7 @@
             white-space: normal;
             word-break: break-word;
             text-align: left;
-            padding: 5px;
+            padding: 4px;
             border-radius: 4px;
         }
         .horario-info {
@@ -107,6 +112,20 @@
         
         .view-section { display: none; }
         .view-section.active { display: block; }
+        
+        .badge-item-delete {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin: 2px;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+        }
+        .badge-item-delete .btn-close {
+            font-size: 0.55rem;
+            padding: 0;
+            margin-left: 2px;
+        }
     </style>
 </head>
 <body>
@@ -116,7 +135,7 @@
         <div class="container-fluid">
             <a class="navbar-brand" href="#"><i class="fas fa-id-card me-2"></i>Directorio MACs (Cloud)</a>
             <div class="d-flex align-items-center">
-                <span class="navbar-text text-light small me-3 d-none d-md-block">Versión 12.3 - Sincronizador de Sedes</span>
+                <span class="navbar-text text-light small me-3 d-none d-md-block">Versión 12.4 - Control de Campaña y Fechas Hábiles/Inhábiles</span>
                 <button class="btn btn-warning btn-sm fw-bold shadow-sm me-2" type="button" data-bs-toggle="modal" data-bs-target="#modalGestorSedes">
                     <i class="fas fa-edit me-1"></i> Editor Sedes
                 </button>
@@ -159,7 +178,7 @@
                 <i class="fas fa-arrow-left me-1"></i> Regresar al Menú Principal
             </button>
             <button class="btn btn-info btn-sm fw-bold text-white shadow-sm" onclick="sincronizarYActualizarTodo()">
-                <i class="fas fa-sync-alt me-1"></i> Actualizar Tablas con Nuevas Sedes
+                <i class="fas fa-sync-alt me-1"></i> Actualizar Tablas y Vaciado
             </button>
         </div>
         
@@ -192,13 +211,18 @@
             <div class="col-md-4">
                 <div class="card card-custom p-3 h-100 d-flex flex-column justify-content-between">
                     <div>
-                        <label class="form-label fw-bold text-danger"><i class="fas fa-ban me-1"></i> Días Festivos / Inhábiles</label>
+                        <label class="form-label fw-bold text-danger mb-1"><i class="fas fa-ban me-1"></i> Días Festivos / Inhábiles</label>
                         <div class="input-group input-group-sm mb-2">
                             <input type="date" id="inputFestivo" class="form-control">
-                            <button class="btn btn-outline-danger" type="button" id="btnAgregarFestivo">Agregar</button>
+                            <button class="btn btn-outline-danger" type="button" id="btnAgregarFestivo">Inhábil</button>
+                        </div>
+                        <label class="form-label fw-bold text-primary mb-1 small"><i class="fas fa-calendar-plus me-1"></i> Días Hábiles Extra (Ej. Domingos)</label>
+                        <div class="input-group input-group-sm mb-2">
+                            <input type="date" id="inputExtraHabil" class="form-control">
+                            <button class="btn btn-outline-primary" type="button" id="btnAgregarExtraHabil">Hábil Extra</button>
                         </div>
                         <div style="max-height: 70px; overflow-y: auto;" id="listaFestivos" class="border rounded p-1 bg-light small mb-2">
-                            <span class="text-muted fst-italic">Sin días festivos registrados.</span>
+                            <span class="text-muted fst-italic">Sin días registrados.</span>
                         </div>
                     </div>
                     <button class="btn btn-outline-dark btn-sm w-100 fw-bold" data-bs-toggle="modal" data-bs-target="#modalListadoSedes">
@@ -472,6 +496,7 @@
 
         let dbRegistros = {};
         let diasFestivos = ["2026-09-16", "2026-11-02", "2026-11-16", "2025-12-25", "2027-01-01"];
+        let diasHabilesExtra = [];
         let mesActivo = 8; 
 
         window.cambiarVista = function(vista) {
@@ -496,7 +521,6 @@
             return fStr;
         }
 
-        // FUNCIÓN DE SINCRONIZACIÓN Y ACTUALIZACIÓN GENERAL
         window.sincronizarYActualizarTodo = function(desdeEditor = false) {
             verificarYPrellenarFijo();
             renderCalendar();
@@ -508,6 +532,22 @@
             alert("¡Sistema actualizado correctamente con las sedes y datos vigentes!");
         };
 
+        function esDiaHabil(fechaStr, modCVE) {
+            const dt = new Date(fechaStr + "T00:00:00");
+            const dow = dt.getDay(); // 0: Dom, 6: Sab
+            const isFest = diasFestivos.includes(fechaStr);
+            const isExtra = diasHabilesExtra.includes(fechaStr);
+
+            if (isFest && !isExtra) return false;
+            if (isExtra) return true;
+
+            if (modCVE === "050351") {
+                return dow !== 0; // Lunes a Sábado
+            } else {
+                return dow !== 0 && dow !== 6; // Lunes a Viernes
+            }
+        }
+
         function verificarYPrellenarFijo() {
             const fIniStr = document.getElementById('fechaInicio').value;
             const fFinStr = document.getElementById('fechaFin').value;
@@ -517,16 +557,14 @@
             if (sedesFijo.length === 0) return;
             const sedeFijaDefault = sedesFijo[0][0];
 
-            let curr = new Date(fIniStr);
-            const fin = new Date(fFinStr);
+            let curr = new Date(fIniStr + "T00:00:00");
+            const fin = new Date(fFinStr + "T00:00:00");
 
             while (curr <= fin) {
                 const fStr = curr.toISOString().split('T')[0];
-                const dow = curr.getDay(); 
-                const isFest = diasFestivos.includes(fStr);
                 const dbKey = `050351_${fStr.replace(/-/g, '_')}`;
 
-                if (dow !== 0 && !isFest) {
+                if (esDiaHabil(fStr, "050351")) {
                     if (!dbRegistros[dbKey] || !dbRegistros[dbKey].identificadorSede) {
                         dbRegistros[dbKey] = { modulo: "050351", fecha: fStr, identificadorSede: sedeFijaDefault };
                     }
@@ -581,6 +619,19 @@
                 }
             });
 
+            document.getElementById('btnAgregarExtraHabil').addEventListener('click', () => {
+                const val = document.getElementById('inputExtraHabil').value;
+                if (val && !diasHabilesExtra.includes(val)) {
+                    diasHabilesExtra.push(val);
+                    diasHabilesExtra.sort();
+                    renderFestivos();
+                    verificarYPrellenarFijo();
+                    renderCalendar();
+                    actualizarResumen();
+                    document.getElementById('inputExtraHabil').value = '';
+                }
+            });
+
             document.getElementById('btnGuardarAsignacion').addEventListener('click', async () => {
                 const fecha = document.getElementById('modalFechaInput').value;
                 const identificadorSede = document.getElementById('selectSedeModal').value;
@@ -610,6 +661,36 @@
             document.getElementById('modalListadoSedes').addEventListener('show.bs.modal', actualizarModalListadoSedes);
             renderFestivos();
         });
+
+        window.eliminarFestivo = function(fecha) {
+            diasFestivos = diasFestivos.filter(d => d !== fecha);
+            renderFestivos();
+            renderCalendar();
+            actualizarResumen();
+        };
+
+        window.eliminarExtraHabil = function(fecha) {
+            diasHabilesExtra = diasHabilesExtra.filter(d => d !== fecha);
+            renderFestivos();
+            renderCalendar();
+            actualizarResumen();
+        };
+
+        function renderFestivos() {
+            const container = document.getElementById('listaFestivos');
+            let html = '';
+            if (diasFestivos.length === 0 && diasHabilesExtra.length === 0) {
+                container.innerHTML = '<span class="text-muted fst-italic">Sin días registrados.</span>';
+                return;
+            }
+            diasFestivos.forEach(d => {
+                html += `<span class="badge bg-danger badge-item-delete">Festivo: ${formatearFechaDDMMYYYY(d)} <button type="button" class="btn-close btn-close-white" onclick="eliminarFestivo('${d}')"></button></span>`;
+            });
+            diasHabilesExtra.forEach(d => {
+                html += `<span class="badge bg-primary badge-item-delete">Hábil Extra: ${formatearFechaDDMMYYYY(d)} <button type="button" class="btn-close btn-close-white" onclick="eliminarExtraHabil('${d}')"></button></span>`;
+            });
+            container.innerHTML = html;
+        }
 
         // --- GESTOR DE SEDES ---
         function renderHeaderGestor() {
@@ -697,15 +778,6 @@
             document.getElementById('infoHorarioModulo').innerHTML = `<i class="fas fa-clock text-muted me-1"></i> <strong>Horario:</strong> ${horariosTexto[mod]}`;
         }
 
-        function renderFestivos() {
-            const container = document.getElementById('listaFestivos');
-            if (diasFestivos.length === 0) {
-                container.innerHTML = '<span class="text-muted fst-italic">Sin días festivos registrados.</span>';
-                return;
-            }
-            container.innerHTML = diasFestivos.map(d => `<span class="badge bg-danger me-1 mb-1 p-1">${formatearFechaDDMMYYYY(d)}</span>`).join('');
-        }
-
         function setupMesButtons() {
             document.querySelectorAll('#mesSelectorBtns button').forEach(btn => {
                 btn.addEventListener('click', (e) => {
@@ -728,34 +800,58 @@
             const totalDiasMes = new Date(anio, mes + 1, 0).getDate();
             const moduloActual = document.getElementById('selectModulo').value;
 
+            const fIniStr = document.getElementById('fechaInicio').value;
+            const fFinStr = document.getElementById('fechaFin').value;
+            const dtInicioCamp = fIniStr ? new Date(fIniStr + "T00:00:00") : null;
+            const dtFinCamp = fFinStr ? new Date(fFinStr + "T00:00:00") : null;
+
             for (let i = 0; i < primerDiaIndex; i++) grid.appendChild(Object.assign(document.createElement('div'), { className: 'calendar-cell disabled' }));
 
             for (let dia = 1; dia <= totalDiasMes; dia++) {
                 const fechaStr = `${anio}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+                const dtActual = new Date(fechaStr + "T00:00:00");
                 const dbKey = `${moduloActual}_${fechaStr.replace(/-/g, '_')}`;
-                const diaSemana = new Date(anio, mes, dia).getDay();
 
                 const cell = document.createElement('div');
                 cell.className = `calendar-cell theme-${moduloActual}`;
 
-                const isFestivo = diasFestivos.includes(fechaStr);
-                const esFinSemanaMovil = moduloActual !== "050351" && (diaSemana === 0 || diaSemana === 6);
-                const esDomingoFijo = moduloActual === "050351" && diaSemana === 0;
+                // Verificar si está dentro del rango de campaña
+                let fueraDeCampaña = false;
+                if (dtInicioCamp && dtFinCamp) {
+                    if (dtActual < dtInicioCamp || dtActual > dtFinCamp) {
+                        fueraDeCampaña = true;
+                    }
+                }
 
-                if (isFestivo) cell.className = 'calendar-cell festive';
-                else if (esFinSemanaMovil || esDomingoFijo) cell.className = 'calendar-cell disabled';
+                const isFestivo = diasFestivos.includes(fechaStr);
+                const isExtraHabil = diasHabilesExtra.includes(fechaStr);
+                const habil = esDiaHabil(fechaStr, moduloActual);
+
+                if (fueraDeCampaña) {
+                    cell.className = 'calendar-cell disabled';
+                } else if (isFestivo && !isExtraHabil) {
+                    cell.className = 'calendar-cell festive';
+                } else if (isExtraHabil) {
+                    cell.className = 'calendar-cell extra-habil';
+                } else if (!habil) {
+                    cell.className = 'calendar-cell disabled';
+                }
 
                 let html = `<div class="day-number">${dia}</div>`;
-                if (isFestivo) html += `<span class="badge bg-danger badge-sede mt-1">Festivo</span>`;
-                else if (esFinSemanaMovil || esDomingoFijo) html += `<span class="text-muted fst-italic" style="font-size:0.7rem;">Inhábil</span>`;
-                else if (dbRegistros[dbKey]?.identificadorSede) {
+                if (fueraDeCampaña) {
+                    html += `<span class="text-muted fst-italic" style="font-size:0.65rem;">Fuera de rango</span>`;
+                } else if (isFestivo && !isExtraHabil) {
+                    html += `<span class="badge bg-danger badge-sede mt-1">Festivo</span>`;
+                } else if (!habil) {
+                    html += `<span class="text-muted fst-italic" style="font-size:0.7rem;">Inhábil</span>`;
+                } else if (dbRegistros[dbKey]?.identificadorSede) {
                     html += `<span class="badge badge-sede badge-sede-${moduloActual} mt-1 fw-bold">${dbRegistros[dbKey].identificadorSede}</span>`;
                 } else {
                     html += `<span class="text-primary fw-bold fst-italic" style="font-size:0.75rem;"><i class="fas fa-plus-circle"></i> Asignar</span>`;
                 }
                 cell.innerHTML = html;
 
-                if (!isFestivo && !esFinSemanaMovil && !esDomingoFijo) {
+                if (!fueraDeCampaña && habil) {
                     cell.addEventListener('click', () => abrirModalSede(fechaStr));
                 }
                 grid.appendChild(cell);
@@ -773,7 +869,8 @@
             obtenerSedesPorModulo(moduloActual).forEach(s => {
                 const opt = document.createElement('option');
                 opt.value = s[0];
-                opt.textContent = `${s[0]} — (${s[10]})`;
+                // Mostrar identificador de sede claramente en la lista
+                opt.textContent = `[${s[0]}] — ${s[10]} (${s[11]})`;
                 if (dbRegistros[dbKey]?.identificadorSede === s[0]) opt.selected = true;
                 selectSede.appendChild(opt);
             });
@@ -852,25 +949,15 @@
 
             const fIniStr = document.getElementById('fechaInicio').value || "2026-09-01";
             const fFinStr = document.getElementById('fechaFin').value || "2027-01-31";
-            const inicioCamp = new Date(fIniStr);
-            const finCamp = new Date(fFinStr);
+            const inicioCamp = new Date(fIniStr + "T00:00:00");
+            const finCamp = new Date(fFinStr + "T00:00:00");
 
             modulosOrden.forEach(modCVE => {
                 let diasProg = [];
                 let curr = new Date(inicioCamp);
                 while(curr <= finCamp) {
                     const fStr = curr.toISOString().split('T')[0];
-                    const dow = curr.getDay(); 
-                    const isFest = diasFestivos.includes(fStr);
-
-                    let esHabil = false;
-                    if (modCVE === "050351") {
-                        if (dow !== 0 && !isFest) esHabil = true;
-                    } else {
-                        if (dow !== 0 && dow !== 6 && !isFest) esHabil = true;
-                    }
-
-                    if (esHabil) {
+                    if (esDiaHabil(fStr, modCVE)) {
                         const dbKey = `${modCVE}_${fStr.replace(/-/g, '_')}`;
                         const sedeAsignada = dbRegistros[dbKey]?.identificadorSede;
                         if (sedeAsignada) {
@@ -883,17 +970,12 @@
                 if (diasProg.length > 0) {
                     let bloqueActual = { sede: diasProg[0].sede, inicio: diasProg[0].fecha, fin: diasProg[0].fecha };
                     for (let i = 1; i < diasProg.length; i++) {
-                        const prevDate = new Date(diasProg[i-1].fecha);
-                        const currDate = new Date(diasProg[i].fecha);
+                        const prevDate = new Date(diasProg[i-1].fecha + "T00:00:00");
+                        const currDate = new Date(diasProg[i].fecha + "T00:00:00");
                         const diffTime = Math.abs(currDate - prevDate);
                         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                         
-                        let esConsecutivoHabil = false;
-                        if (modCVE === "050351") {
-                            esConsecutivoHabil = (diffDays === 1) || (prevDate.getDay() === 6 && currDate.getDay() === 1);
-                        } else {
-                            esConsecutivoHabil = (diffDays === 1) || (prevDate.getDay() === 5 && currDate.getDay() === 1);
-                        }
+                        let esConsecutivoHabil = diffDays === 1;
 
                         if (diasProg[i].sede === bloqueActual.sede && esConsecutivoHabil) {
                             bloqueActual.fin = diasProg[i].fecha;
