@@ -103,7 +103,7 @@
         #modalGestorSedes td:hover { white-space: normal; word-break: break-word; overflow: visible; background-color: #f8f9fa; z-index: 10; position: relative;}
         
         .table-gestor-wrapper { max-height: calc(100vh - 200px); overflow-y: auto; overflow-x: auto; }
-        .toolbar-gestor { background-color: #f1f3f5; border-radius: 8px; padding: 10px; margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .toolbar-gestor { background-color: #f1f3f5; border-radius: 8px; padding: 10px; margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
         
         .view-section { display: none; }
         .view-section.active { display: block; }
@@ -116,7 +116,7 @@
         <div class="container-fluid">
             <a class="navbar-brand" href="#"><i class="fas fa-id-card me-2"></i>Directorio MACs (Cloud)</a>
             <div class="d-flex align-items-center">
-                <span class="navbar-text text-light small me-3 d-none d-md-block">Versión 12.2 - Barra Fija y Automatización Fijo</span>
+                <span class="navbar-text text-light small me-3 d-none d-md-block">Versión 12.3 - Sincronizador de Sedes</span>
                 <button class="btn btn-warning btn-sm fw-bold shadow-sm me-2" type="button" data-bs-toggle="modal" data-bs-target="#modalGestorSedes">
                     <i class="fas fa-edit me-1"></i> Editor Sedes
                 </button>
@@ -154,9 +154,12 @@
 
     <!-- PANTALLA 2: CALENDARIO OPERATIVO -->
     <div id="vistaCalendario" class="container my-4 view-section">
-        <div class="mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-3">
             <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="cambiarVista('selector')">
                 <i class="fas fa-arrow-left me-1"></i> Regresar al Menú Principal
+            </button>
+            <button class="btn btn-info btn-sm fw-bold text-white shadow-sm" onclick="sincronizarYActualizarTodo()">
+                <i class="fas fa-sync-alt me-1"></i> Actualizar Tablas con Nuevas Sedes
             </button>
         </div>
         
@@ -270,9 +273,14 @@
                 <i class="fas fa-arrow-left me-1"></i> Regresar al Menú Principal
             </button>
             <h3 class="fw-bold text-dark mb-0"><i class="fas fa-file-excel text-success me-2"></i>Tabla de Vaciado Final (Oficial)</h3>
-            <button class="btn btn-success btn-sm fw-bold" onclick="exportarVaciadoCSV()">
-                <i class="fas fa-download me-1"></i> Descargar Vaciado CSV
-            </button>
+            <div>
+                <button class="btn btn-info btn-sm fw-bold text-white me-2" onclick="sincronizarYActualizarTodo()">
+                    <i class="fas fa-sync-alt me-1"></i> Actualizar Tablas
+                </button>
+                <button class="btn btn-success btn-sm fw-bold" onclick="exportarVaciadoCSV()">
+                    <i class="fas fa-download me-1"></i> Descargar CSV
+                </button>
+            </div>
         </div>
 
         <div class="card card-custom">
@@ -354,9 +362,10 @@
                         <button class="btn btn-primary btn-sm fw-bold" onclick="exportarCSV()"><i class="fas fa-download me-1"></i> Respaldo (.csv)</button>
                         <div class="d-flex align-items-center border-start border-end px-3">
                             <input class="form-control form-control-sm me-2" type="file" id="inputCsvUpload" accept=".csv" style="max-width: 250px;">
-                            <button class="btn btn-secondary btn-sm fw-bold" onclick="importarCSV()"><i class="fas fa-upload me-1"></i> Subir</button>
+                            <button class="btn btn-secondary btn-sm fw-bold" onclick="importarCSV()"><i class="fas fa-upload me-1"></i> Subir Excel</button>
                         </div>
-                        <button class="btn btn-danger btn-sm fw-bold ms-auto" onclick="borrarTodoCatalogo()"><i class="fas fa-trash-alt me-1"></i> Borrar Todo</button>
+                        <button class="btn btn-info btn-sm fw-bold text-white ms-auto" onclick="sincronizarYActualizarTodo(true)"><i class="fas fa-sync-alt me-1"></i> Actualizar Todo el Sistema</button>
+                        <button class="btn btn-danger btn-sm fw-bold" onclick="borrarTodoCatalogo()"><i class="fas fa-trash-alt me-1"></i> Borrar Todo</button>
                     </div>
                     <div class="table-gestor-wrapper bg-white shadow-sm border rounded">
                         <table class="table table-hover table-bordered mb-0" id="tablaSedes">
@@ -412,7 +421,6 @@
             "Coordenadas X", "Coordenadas y"
         ];
         
-        // RECUPERACIÓN COMPLETA DE TODOS LOS REGISTROS DE SEDES
         let catalogoSedes = [
             ["380-2 monclova", "5", "3", "18", "MONCLOVA", "050351", "F", "380", "U", "1", "MONCLOVA", "CALLE GUERRERO 101 ZONA CENTRO", "", "225700", "ENTRE LA CALLE VENUSTIANO CARRANZA Y CALLE DE LA FUENTE", "LUN A VIER DE 08:00 a. m. A 03:00 p. m.;  SAB DE 08:00 a. m. A 03:00 p. m.;", "B+5", "-101.41806", "26.90143"],
             ["Monclova TV", "5", "3", "18", "MONCLOVA", "050351", "F", "380", "U", "1", "MONCLOVA", "CALLE GUERRERO 101 ZONA CENTRO", "", "225700", "ENTRE LA CALLE VENUSTIANO CARRANZA Y CALLE DE LA FUENTE", "LUN A VIER DE 08:00 a. m. A 03:00 p. m.;  SAB DE 09:00 a. m. A 04:00 p. m.;  DOM DE 09:00 a. m. A 04:00 p. m.", "B+5", "-101.41806", "26.90143"],
@@ -488,7 +496,18 @@
             return fStr;
         }
 
-        // AUTOMATIZACIÓN MÓDULO FIJO (050351)
+        // FUNCIÓN DE SINCRONIZACIÓN Y ACTUALIZACIÓN GENERAL
+        window.sincronizarYActualizarTodo = function(desdeEditor = false) {
+            verificarYPrellenarFijo();
+            renderCalendar();
+            actualizarResumen();
+            renderVaciadoFinal();
+            if (desdeEditor) {
+                bootstrap.Modal.getInstance(document.getElementById('modalGestorSedes'))?.hide();
+            }
+            alert("¡Sistema actualizado correctamente con las sedes y datos vigentes!");
+        };
+
         function verificarYPrellenarFijo() {
             const fIniStr = document.getElementById('fechaInicio').value;
             const fFinStr = document.getElementById('fechaFin').value;
@@ -496,18 +515,17 @@
 
             const sedesFijo = obtenerSedesPorModulo("050351");
             if (sedesFijo.length === 0) return;
-            const sedeFijaDefault = sedesFijo[0][0]; // Usar primera sede fija (Monclova)
+            const sedeFijaDefault = sedesFijo[0][0];
 
             let curr = new Date(fIniStr);
             const fin = new Date(fFinStr);
 
             while (curr <= fin) {
                 const fStr = curr.toISOString().split('T')[0];
-                const dow = curr.getDay(); // 0: Dom
+                const dow = curr.getDay(); 
                 const isFest = diasFestivos.includes(fStr);
                 const dbKey = `050351_${fStr.replace(/-/g, '_')}`;
 
-                // Si es hábil para el fijo (Lunes a Sábado, no domingo, no festivo) y no tiene sede asignada, asignar por defecto
                 if (dow !== 0 && !isFest) {
                     if (!dbRegistros[dbKey] || !dbRegistros[dbKey].identificadorSede) {
                         dbRegistros[dbKey] = { modulo: "050351", fecha: fStr, identificadorSede: sedeFijaDefault };
@@ -669,7 +687,7 @@
                         }
                     }
                     renderEditorSedes();
-                    alert("Importación completada.");
+                    alert("Importación completada con éxito.");
                 }
             };
         };
