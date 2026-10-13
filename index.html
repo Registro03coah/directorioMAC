@@ -33,7 +33,6 @@
             border-radius: 0.75rem;
             transition: all 0.2s ease-in-out;
         }
-        /* Efecto cursor de mano interactivo para botones principales */
         .card-action-btn {
             cursor: pointer;
         }
@@ -117,7 +116,8 @@
         }
 
         #modalGestorSedes th, #tablaVaciadoFinal th { background-color: #880e4f !important; color: white !important; white-space: nowrap; font-size: 0.75rem; padding: 8px; text-align: center; }
-        #tablaVaciadoFinal td { vertical-align: middle; white-space: nowrap; font-size: 0.75rem; padding: 6px; }
+        #tablaVaciadoFinal td { vertical-align: middle; white-space: nowrap; font-size: 0.75rem; padding: 6px; text-align: center; }
+        #tablaVaciadoFinal td:nth-child(11) { text-align: left; } /* Localidad alineada a la izquierda */
         
         #modalGestorSedes th { background-color: #1b396b !important; }
         #modalGestorSedes td { vertical-align: middle; white-space: nowrap; max-width: 180px; overflow: hidden; text-overflow: ellipsis; font-size: 0.8rem; padding: 8px;}
@@ -191,7 +191,7 @@
                 <span>Directorio MACs</span>
             </a>
             <div class="d-flex align-items-center">
-                <span class="navbar-text text-light small me-2 fw-bold">v18.0</span>
+                <span class="navbar-text text-light small me-2 fw-bold">v19.0</span>
             </div>
         </div>
     </nav>
@@ -608,6 +608,7 @@
         let mesActivo = 8; 
         let alertaResguardoMostrada = false;
 
+        // Columnas oficiales de la tabla de directorio de módulos con coordenadas
         const columnasVaciado = [
             "CVE ENT", "CVE DTO", "CVE MPO", "NOMBRE MPIO", "CVE DE MODULO", 
             "TIPO DE MODULO", "SECCION SEDE", "TIPO SECCION", "CVE LOCALIDAD", "NOMBRE LOCALIDAD", 
@@ -621,7 +622,6 @@
             "050354": "Lunes a Viernes (09:00 AM - 04:00 PM)"
         };
 
-        // Solicitar Contraseña de Administrador (charro) para abrir panel
         window.solicitarPasswordAdmin = function() {
             let pass = prompt("Ingrese la contraseña de Administrador:");
             if (pass === "charro") {
@@ -631,7 +631,6 @@
             }
         };
 
-        // Solicitar Contraseña para Reinicio Total
         window.solicitarPasswordReinicioTotal = function() {
             let pass = prompt("⚠️ Acción protegida. Ingrese la contraseña de Administrador para confirmar el Reinicio Total:");
             if (pass === "charro") {
@@ -1071,7 +1070,7 @@
                     try {
                         await set(ref(database, 'catalogoSedes'), catalogoSedes);
                         renderEditorSedes();
-                        fileInput.value = ""; // Limpia el cuadro de selección de archivo tras subirlo con éxito
+                        fileInput.value = ""; 
                         alert("¡Catálogo importado y guardado en la nube con éxito!");
                     } catch (err) {
                         console.error("Error al guardar CSV en Firebase:", err);
@@ -1376,6 +1375,9 @@
                 const diaInicialStr = formatearFechaDDMMYYYY(bloque.inicio);
                 const diaFinalStr = formatearFechaDDMMYYYY(bloque.fin);
                 
+                // Mapeo corregido y exacto según solicitud e imagen:
+                // s[1]=CVE ENT, s[2]=CVE DTO, s[3]=CVE MPO, s[4]=NOMBRE MPIO, s[5]=CVE MOD, s[6]=TIPO MOD, s[7]=SEC SEDE, s[8]=TIPO SEC, s[9]=CVE LOC, s[10]=NOM LOC, s[11]=DIR, s[12]=MZ, s[13]=CP, s[14]=REF
+                // s[15]=Horario, s[16]=Config TM (ej. B+5), s[17]=Config TV (ej. NA), s[18]=Coordenada X (Negativa -101.xxx), s[19]=Coordenada Y (Positiva 26.xxx)
                 const rowVals = [
                     sData[1] || "", 
                     sData[2] || "", 
@@ -1394,10 +1396,10 @@
                     diaInicialStr,   
                     diaFinalStr,     
                     horariosTexto[sData[5]] || "", 
-                    sData[15] || "", 
-                    sData[16] || "", 
-                    sData[17] || "", 
-                    sData[18] || ""  
+                    sData[16] || "", // Configuración TM (B+5, B+3...)
+                    sData[17] || "NA", // Configuración TV (NA)
+                    sData[18] || "", // Coordenadas X (-101.xxx)
+                    sData[19] || ""  // Coordenadas Y (26.xxx)
                 ];
 
                 tbody.innerHTML += `<tr>` + rowVals.map(v => `<td>${v}</td>`).join('') + `</tr>`;
