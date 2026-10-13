@@ -193,7 +193,7 @@
                 <span>Directorio MACs</span>
             </a>
             <div class="d-flex align-items-center">
-                <span class="navbar-text text-light small me-2 fw-bold">v24.0</span>
+                <span class="navbar-text text-light small me-2 fw-bold">v25.0</span>
             </div>
         </div>
     </nav>
@@ -228,9 +228,9 @@
                             </div>
                         </div>
 
-                        <!-- BOTÓN DE ADMINISTRADOR ABAJO CON CONTRASEÑA -->
+                        <!-- BOTÓN DE ADMINISTRADOR ABAJO -->
                         <div>
-                            <button class="btn btn-dark py-2 px-4 shadow-sm fw-bold" onclick="solicitarPasswordAdmin()">
+                            <button class="btn btn-dark py-2 px-4 shadow-sm fw-bold" onclick="abrirModalPasswordAdmin()">
                                 <i class="fas fa-tools text-warning me-2"></i> Panel de Soporte Técnico / Administrador
                             </button>
                         </div>
@@ -348,7 +348,6 @@
                     <button class="btn btn-info btn-sm fw-bold text-white" onclick="sincronizarYActualizarTodo()">
                         <i class="fas fa-sync-alt me-1"></i> Actualizar
                     </button>
-                    <!-- BOTÓN PARA DESCARGAR USANDO TU PLANTILLA OFICIAL RESPETANDO FORMATOS -->
                     <button class="btn btn-success btn-sm fw-bold" onclick="exportarExcelOficialPlantillaConEstilos()">
                         <i class="fas fa-file-excel me-1"></i> Descargar Excel Oficial (Con Formato)
                     </button>
@@ -370,13 +369,25 @@
         </div>
     </div>
 
-    <!-- PIE DE PÁGINA (FOOTER) -->
-    <footer>
-        <div class="container">
-            <p class="mb-1">Sistema Web para Directorio de Módulos &copy; 2026 Todos los derechos reservados.</p>
-            <p class="mb-0 text-muted small">Diseñado y desarrollado por <strong class="text-light">Carrivers Design</strong></p>
+    <!-- MODAL DE INGRESO DE CONTRASEÑA DE ADMINISTRADOR (OCULTA CON PASSWORD) -->
+    <div class="modal fade" id="modalPasswordAdmin" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h6 class="modal-title fw-bold"><i class="fas fa-lock text-warning me-2"></i>Acceso Restringido</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label for="inputPasswordAdmin" class="form-label small fw-bold">Ingrese la contraseña de Administrador:</label>
+                    <input type="password" id="inputPasswordAdmin" class="form-control form-control-sm" placeholder="••••••••" autocomplete="current-password">
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary btn-sm px-4 fw-bold" onclick="verificarPasswordAdmin()">Aceptar</button>
+                </div>
+            </div>
         </div>
-    </footer>
+    </div>
 
     <!-- MODAL CENTRO DE MANDO: PANEL DE SOPORTE TÉCNICO / ADMINISTRADOR -->
     <div class="modal fade" id="modalPanelAdmin" tabindex="-1">
@@ -391,6 +402,22 @@
                 </div>
                 <div class="modal-body bg-light">
                     <div class="row g-4">
+                        <!-- CONTROL DE BLOQUEO / DESBLOQUEO DE EDICIÓN EN CALENDARIOS -->
+                        <div class="col-12">
+                            <div class="card card-custom p-3 border-warning bg-white">
+                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                    <div>
+                                        <h6 class="fw-bold text-dark mb-1"><i class="fas fa-lock-open text-warning me-2"></i>Control de Permisos de Edición en Calendarios</h6>
+                                        <p class="small text-muted mb-0">Permite activar o bloquear la modificación de sedes por día en los calendarios operativos para los usuarios.</p>
+                                    </div>
+                                    <div class="form-check form-switch fs-5">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="switchBloqueoEdicion" style="cursor: pointer;">
+                                        <label class="form-check-label fw-bold fs-6 text-primary" for="switchBloqueoEdicion" id="labelEstadoBloqueo">Bloqueado</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="col-md-6">
                             <div class="card card-custom p-3 h-100 border border-primary">
                                 <h6 class="fw-bold text-primary mb-3"><i class="fas fa-calendar-alt me-2"></i>Periodo Oficial de Campaña</h6>
@@ -423,13 +450,17 @@
 
                         <div class="col-12">
                             <div class="card card-custom p-3 border-secondary">
-                                <h6 class="fw-bold text-dark mb-3"><i class="fas fa-cogs me-2"></i>Herramientas de Administración y Catálogos</h6>
+                                <h6 class="fw-bold text-dark mb-3"><i class="fas fa-cogs me-2"></i>Herramientas de Administración, Resguardos y Catálogos</h6>
                                 <div class="d-flex flex-wrap gap-2">
                                     <button class="btn btn-outline-primary btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalGestorSedes">
                                         <i class="fas fa-database me-1"></i> Abrir Editor Maestro de Sedes
                                     </button>
                                     <button class="btn btn-outline-dark btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalListadoSedes">
                                         <i class="fas fa-list-ul me-1"></i> Listado de Sedes y Totales
+                                    </button>
+                                    <!-- BOTÓN PARA RESPALDAR CALENDARIOS EXCEPTO EL MÓDULO 050351 -->
+                                    <button class="btn btn-success btn-sm fw-bold" onclick="exportarResguardoCalendariosSinFijo()">
+                                        <i class="fas fa-file-download me-1"></i> Respaldar Calendarios (Sin 050351)
                                     </button>
                                     <button class="btn btn-danger btn-sm fw-bold ms-auto" onclick="solicitarPasswordReinicioTotal()">
                                         <i class="fas fa-power-off me-1"></i> Reiniciar Sistema Total (Ceros)
@@ -609,6 +640,7 @@
         let diasHabilesExtra = [];
         let mesActivo = 8; 
         let alertaResguardoMostrada = false;
+        let edicionCalendarioPermitida = false; // Estado del interruptor de permisos de edición
 
         const columnasVaciado = [
             "CVE ENT", "CVE DTO", "CVE MPO", "NOMBRE MPIO", "CVE DE MODULO", 
@@ -623,32 +655,30 @@
             "050354": "Lunes a Viernes (09:00 AM - 04:00 PM)"
         };
 
-        // CONTRASEÑA OCULTA USANDO TÉCNICA PERSONALIZADA
-        window.solicitarPasswordAdmin = function() {
-            let pass = promptPersonalizado("Ingrese la contraseña de Administrador:");
+        // CONTRASEÑA OCULTA CON MODAL PROFESIONAL
+        window.abrirModalPasswordAdmin = function() {
+            document.getElementById('inputPasswordAdmin').value = '';
+            new bootstrap.Modal(document.getElementById('modalPasswordAdmin')).show();
+        };
+
+        window.verificarPasswordAdmin = function() {
+            const pass = document.getElementById('inputPasswordAdmin').value;
             if (pass === "charro") {
+                bootstrap.Modal.getInstance(document.getElementById('modalPasswordAdmin')).hide();
                 new bootstrap.Modal(document.getElementById('modalPanelAdmin')).show();
-            } else if (pass !== null) {
+            } else {
                 alert("Contraseña incorrecta.");
             }
         };
 
         window.solicitarPasswordReinicioTotal = function() {
-            let pass = promptPersonalizado("⚠️ Acción protegida. Ingrese la contraseña de Administrador para confirmar el Reinicio Total:");
+            let pass = prompt("⚠️ Acción protegida. Ingrese la contraseña de Administrador para confirmar el Reinicio Total:");
             if (pass === "charro") {
                 reiniciarSistemaCompleto();
             } else if (pass !== null) {
                 alert("Contraseña incorrecta. Operación cancelada.");
             }
         };
-
-        // Función auxiliar para mostrar un cuadro de contraseña oculto con asteriscos
-        function promptPersonalizado(mensaje) {
-            let pwd = prompt(mensaje); // Nota: En navegadores estándar prompt() es texto plano, 
-            // pero implementamos verificación segura. Si deseas un input flotante oculto real con HTML modal, 
-            // puedes integrarlo. Aquí el prompt maneja la clave 'charro'.
-            return pwd;
-        }
 
         window.cambiarVista = function(vista) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
@@ -692,6 +722,7 @@
                     await set(ref(database, 'configuracionCampania'), null);
                     await set(ref(database, 'diasFestivosCustom'), null);
                     await set(ref(database, 'diasExtraCustom'), null);
+                    await set(ref(database, 'permisoEdicionCalendario'), null);
                     alert("¡Sistema reiniciado y dejado completamente en blanco! La página se recargará.");
                     location.reload();
                 } catch (e) {
@@ -747,6 +778,25 @@
             actualizarRangoVisualCampania();
             setupMesButtons();
             
+            // Sincronizar estado del interruptor de permisos de edición
+            const switchBloqueo = document.getElementById('switchBloqueoEdicion');
+            switchBloqueo.addEventListener('change', async (e) => {
+                edicionCalendarioPermitida = e.target.checked;
+                actualizarLabelBloqueoVisual();
+                try {
+                    await set(ref(database, 'permisoEdicionCalendario'), edicionCalendarioPermitida);
+                } catch(err) {
+                    console.error("Error al actualizar permiso en Firebase:", err);
+                }
+            });
+
+            onValue(ref(database, 'permisoEdicionCalendario'), (snap) => {
+                const val = snap.val();
+                edicionCalendarioPermitida = val === true;
+                switchBloqueo.checked = edicionCalendarioPermitida;
+                actualizarLabelBloqueoVisual();
+            });
+
             onValue(ref(database, 'configuracionCampania'), async (snap) => {
                 const cfg = snap.val();
                 const fIniInput = document.getElementById('fechaInicio');
@@ -873,6 +923,42 @@
             renderFestivos();
         });
 
+        function actualizarLabelBloqueoVisual() {
+            const lbl = document.getElementById('labelEstadoBloqueo');
+            if (edicionCalendarioPermitida) {
+                lbl.innerText = "Desbloqueado (Edición Permitida)";
+                lbl.className = "form-check-label fw-bold fs-6 text-success";
+            } else {
+                lbl.innerText = "Bloqueado (Solo Lectura)";
+                lbl.className = "form-check-label fw-bold fs-6 text-danger";
+            }
+        }
+
+        // FUNCIÓN PARA RESPALDAR CALENDARIOS EXCEPTO EL MÓDULO 050351
+        window.exportarResguardoCalendariosSinFijo = function() {
+            let contenido = "RESPALDO DE CALENDARIOS OPERATIVOS (EXCEPTO 050351)\n====================================================\n\n";
+            let contador = 0;
+
+            Object.values(dbRegistros).forEach(reg => {
+                if (reg && reg.modulo && reg.modulo !== "050351" && reg.identificadorSede) {
+                    const sData = catalogoSedes.find(s => s[0] === reg.identificadorSede);
+                    const localidad = sData ? sData[10] : "Localidad desconocida";
+                    contenido += `MÓDULO: ${reg.modulo} | FECHA: ${formatearFechaDDMMYYYY(reg.fecha)} | ID SEDE: ${reg.identificadorSede} | LOCALIDAD: ${localidad}\n`;
+                    contador++;
+                }
+            });
+
+            if (contador === 0) {
+                alert("No hay registros de calendarios en módulos diferentes a 050351 para respaldar.");
+                return;
+            }
+
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(new Blob([contenido], { type: 'text/plain;charset=utf-8;' }));
+            link.download = "respaldo_calendarios_sin_fijo.txt";
+            link.click();
+        };
+
         function actualizarRangoVisualCampania() {
             const ini = document.getElementById('fechaInicio').value;
             const fin = document.getElementById('fechaFin').value;
@@ -884,7 +970,6 @@
             }
         }
 
-        // VERIFICACIÓN DE CAMPAÑA 100% COMPLETADA
         function verificarCampaniaCompleta() {
             const fIniStr = document.getElementById('fechaInicio').value;
             const fFinStr = document.getElementById('fechaFin').value;
@@ -1180,7 +1265,13 @@
             }
         }
 
+        // VALIDACIÓN DE PERMISO DE EDICIÓN CON EL MENSAJE SOLICITADO
         window.abrirModalSede = function(fechaStr) {
+            if (!edicionCalendarioPermitida) {
+                alert("⚠️ La edición de calendarios se encuentra bloqueada. Solicite la activación al administrador para hacer cambios.");
+                return;
+            }
+
             document.getElementById('modalFechaInput').value = fechaStr;
             document.getElementById('modalFechaTitulo').innerText = `Asignar Sede - ${formatearFechaDDMMYYYY(fechaStr)}`;
             const moduloActual = document.getElementById('selectModulo').value;
@@ -1434,7 +1525,6 @@
             });
         }
 
-        // FUNCIÓN AVANZADA CON EXCELJS PARA COPIAR VALORES RESPETANDO FORMATOS, BORDES Y ESTILOS DE LA FILA 11
         window.exportarExcelOficialPlantillaConEstilos = async function() {
             try {
                 const response = await fetch('Directorio_de_modulos.xlsx');
