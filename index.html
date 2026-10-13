@@ -167,7 +167,7 @@
                             <div class="card card-custom p-4 h-100 border border-success text-center bg-light cursor-pointer" onclick="cambiarVista('vaciado')">
                                 <i class="fas fa-file-excel fa-3x text-success mb-3"></i>
                                 <h4 class="fw-bold text-dark">Vaciado Final</h4>
-                                <p class="small text-muted mb-0">Generación automática de la tabla oficial de 21 columnas en orden estricto.</p>
+                                <p class="small text-muted mb-0">Generación automática de la tabla oficial con columnas de día inicial, final y horario.</p>
                             </div>
                         </div>
                     </div>
@@ -348,7 +348,7 @@
         </div>
     </div>
 
-    <!-- MODAL LISTADO DE SEDES Y TOTALES (VENTANA FLOTANTE ORDENADA POR MÓDULOS) -->
+    <!-- MODAL LISTADO DE SEDES Y TOTALES -->
     <div class="modal fade" id="modalListadoSedes" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
@@ -479,12 +479,12 @@
             ["252-1 don martin congregacion", "5", "3", "15", "JUAREZ", "050354", "m", "252", "R", "9", "DON MARTIN CONGREGACION", "CALLE BENITO JUÁREZ S/N LOCALIDAD CONGREGACIÓN DON MARTÍN", "", "125410", "ENTRE LA CALLE RODOLFO ORTIZ Y LA CALLE ERNESTO ZEDILLO UNIDAD DE SALUD IMSS BIENESTAR", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+2"," ", "-100.618815", "27.527313"]
         ];
 
-        // ENCABEZADOS EXACTOS SOLICITADOS (ANEXO 1)
+        // ENCABEZADOS EXACTOS CON LAS NUEVAS COLUMNAS DE DÍA INICIAL Y FINAL JUSTO ANTES DE HORARIO
         const columnasVaciado = [
             "identificador sede", "CVE ENT", "CVE DTO", "CVE MPO", "NOMBRE MPIO", "CVE DE MODULO", 
             "TIPO DE MODULO", "SECCION SEDE", "TIPO SECCION", "CVE LOCALIDAD", "NOMBRE LOCALIDAD", 
-            "DIRECCION", "MZ", "CODIGO POSTAL", "REFERENCIAS", "HORARIO", 
-            "Configuracion tm", "Configuracion tv", "Coordenadas X", "Coordenadas y", "DIAS"
+            "DIRECCION", "MZ", "CODIGO POSTAL", "REFERENCIAS", "DÍA INICIAL", "DÍA FINAL", "HORARIO", 
+            "Configuracion tm", "Configuracion tv", "Coordenadas X", "Coordenadas y"
         ];
 
         const horariosTexto = {
@@ -940,12 +940,11 @@
             });
         }
 
-        // VENTANA FLOTANTE: LISTADO DE SEDES Y TOTALES ORDENADO POR MÓDULOS (050351, 050353, 050354)
+        // VENTANA FLOTANTE: LISTADO DE SEDES Y TOTALES ORDENADO POR MÓDULOS
         function actualizarModalListadoSedes() {
             const container = document.getElementById('modalListadoSedesBody');
             const modulosOrden = ["050351", "050353", "050354"];
             
-            // Contabilizar cuantas fechas tiene cada sede asignada
             let sedesConteo = {};
             Object.values(dbRegistros).forEach(reg => {
                 if (reg?.modulo && reg?.identificadorSede) {
@@ -1010,7 +1009,7 @@
                     contenido += "Sin sedes con fechas asignadas.\n";
                 } else {
                     sedesMod.forEach(item => {
-                        contenido += `LOCALIDAD: ${item.localidad}   VISITAS: ${item.visitas}\n`;
+                        contenido += `LOCALIDAD: ${item.localidad}    VISITAS: ${item.visitas}\n`;
                     });
                 }
                 contenido += "\n";
@@ -1022,7 +1021,7 @@
             link.click();
         };
 
-        // --- MOTOR DE VACIADO FINAL (ORDEN EXACTO ANEXO 1) ---
+        // --- MOTOR DE VACIADO FINAL (COLUMNAS SEPARADAS DE DÍA INICIAL Y FINAL ANTES DE HORARIO) ---
         function renderVaciadoFinal() {
             verificarYPrellenarFijo();
             const theadTr = document.getElementById('theadVaciadoTr');
@@ -1082,9 +1081,10 @@
 
             filasGeneradas.forEach(bloque => {
                 const sData = catalogoSedes.find(s => s[0] === bloque.sede) || [];
-                const rangoDiasStr = `${formatearFechaDDMMYYYY(bloque.inicio)} al ${formatearFechaDDMMYYYY(bloque.fin)}`;
+                const diaInicialStr = formatearFechaDDMMYYYY(bloque.inicio);
+                const diaFinalStr = formatearFechaDDMMYYYY(bloque.fin);
                 
-                // Orden estricto según Anexo 1
+                // Mapeo estricto respetando las columnas de fecha inicial y final separadas, justo antes de horario
                 const rowVals = [
                     sData[0] || "", // identificador sede
                     sData[1] || "", // CVE ENT
@@ -1101,13 +1101,13 @@
                     sData[12] || "", // MZ
                     sData[13] || "", // CODIGO POSTAL
                     sData[14] || "", // REFERENCIAS
-                    rangoDiasStr     // DIAS
+                    diaInicialStr,   // DÍA INICIAL
+                    diaFinalStr,     // DÍA FINAL
                     horariosTexto[sData[5]] || "", // HORARIO
                     sData[15] || "", // Configuracion tm
                     sData[16] || "", // Configuracion tv
                     sData[17] || "", // Coordenadas X
-                    sData[18] || "", // Coordenadas y
-                    
+                    sData[18] || ""  // Coordenadas y
                 ];
 
                 tbody.innerHTML += `<tr>` + rowVals.map(v => `<td>${v}</td>`).join('') + `</tr>`;
