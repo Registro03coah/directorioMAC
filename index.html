@@ -179,12 +179,12 @@
                     <span class="status-dot" id="statusDot"></span>
                     <span id="statusText">Conectando a Firebase...</span>
                 </div>
-                <span class="navbar-text text-light small me-3 d-none d-lg-block">Versión 15.0</span>
+                <span class="navbar-text text-light small me-3 d-none d-lg-block">Versión 16.0</span>
                 <button class="btn btn-warning btn-sm fw-bold shadow-sm me-2" type="button" data-bs-toggle="modal" data-bs-target="#modalGestorSedes">
                     <i class="fas fa-edit me-1"></i> Editor Sedes
                 </button>
                 <button class="btn btn-danger btn-sm fw-bold shadow-sm" type="button" onclick="reiniciarSistemaCompleto()">
-                    <i class="fas fa-power-off me-1"></i> Reiniciar Sistema
+                    <i class="fas fa-power-off me-1"></i> Reiniciar Sistema Total
                 </button>
             </div>
         </div>
@@ -477,7 +477,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA6jvnsXZwF2anOJo3VadfNvn7Fl6Z5efY",
@@ -512,19 +512,12 @@
             "Coordenadas X", "Coordenadas y"
         ];
         
-        const catalogoSedesDefault = [
-            ["380-2 monclova", "5", "3", "18", "MONCLOVA", "050351", "F", "380", "U", "1", "MONCLOVA", "CALLE GUERRERO 101 ZONA CENTRO", "2", "25700", "ENTRE LA CALLE VENUSTIANO CARRANZA Y CALLE DE LA FUENTE", "LUN A VIER DE 08:00 a. m. A 03:00 p. m.  SAB DE 08:00 a. m. A 03:00 p. m.", "B+5"," ", "-101.41806", "26.90143"],
-            ["701-31 sabinas", "5", "3", "28", "SABINAS", "050353", "S", "701", "U", "1", "SABINAS", "CALLE CUAUHTÉMOC S/N COLONIA CENTENARIO", "31", "26750", "ESQUINA CON CALLE INDEPENDENCIA", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+3"," ", "-101.11192", "27.85518"],
-            ["88-22 castaños", "5", "3", "6", "CASTAÑOS", "050354", "M", "88", "U", "1", "CASTAÑOS", "CALLE MORELOS S/N COLONIA ZONA CENTRO", "22", "25870", "ENTRE CALLE OCAMPO Y ESCOBEDO", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+2"," ", "-101.42839", "26.78652"]
-        ];
-
         let catalogoSedes = [];
         let dbRegistros = {};
-        let diasFestivos = ["2026-09-16", "2026-11-02", "2026-11-16", "2025-12-25", "2027-01-01"];
+        let diasFestivos = [];
         let diasHabilesExtra = [];
         let mesActivo = 8; 
 
-        // COLUMNAS OFICIALES DE VACIADO FINAL (SIN LA COLUMNA EXTRA DE IDENTIFICADOR DE SEDE REPETIDA Y CON ORDEN CORRECTO)
         const columnasVaciado = [
             "CVE ENT", "CVE DTO", "CVE MPO", "NOMBRE MPIO", "CVE DE MODULO", 
             "TIPO DE MODULO", "SECCION SEDE", "TIPO SECCION", "CVE LOCALIDAD", "NOMBRE LOCALIDAD", 
@@ -571,20 +564,20 @@
             alert("¡Sistema actualizado correctamente con las sedes y datos vigentes!");
         };
 
-        // --- BOTÓN DE REINICIO TOTAL ---
+        // --- BOTÓN DE REINICIO TOTAL (LIMPIA FIREBASE POR COMPLETO) ---
         window.reiniciarSistemaCompleto = async function() {
-            if (confirm("⚠️ ¿Estás seguro de reiniciar todo el sistema? Se borrarán todas las asignaciones, fechas personalizadas, días festivos y el catálogo actual de Firebase, dejándolo completamente en ceros.")) {
+            if (confirm("⚠️ ¿Estás seguro de reiniciar todo el sistema? Se borrarán todas las asignaciones, fechas, días festivos y el catálogo de Firebase, dejándolo completamente en blanco.")) {
                 try {
                     await set(ref(database, 'catalogoSedes'), null);
                     await set(ref(database, 'directorioMACs'), null);
                     await set(ref(database, 'configuracionCampania'), null);
                     await set(ref(database, 'diasFestivosCustom'), null);
                     await set(ref(database, 'diasExtraCustom'), null);
-                    alert("¡Sistema reiniciado desde cero con éxito! La página se recargará.");
+                    alert("¡Sistema reiniciado y dejado completamente en blanco! La página se recargará.");
                     location.reload();
                 } catch (e) {
                     console.error("Error al reiniciar Firebase:", e);
-                    alert("Hubo un error al reiniciar la base de datos.");
+                    alert("Hubo un error al limpiar la base de datos.");
                 }
             }
         };
@@ -635,58 +628,45 @@
             actualizarInfoHorario();
             setupMesButtons();
             
-            // Sincronizar Configuración de Campaña (Fechas)
-            const campaniaRef = ref(database, 'configuracionCampania');
-            onValue(campaniaRef, async (snap) => {
+            // Sincronizar Configuración de Campaña
+            onValue(ref(database, 'configuracionCampania'), async (snap) => {
                 const cfg = snap.val();
                 const fIniInput = document.getElementById('fechaInicio');
                 const fFinInput = document.getElementById('fechaFin');
                 if (cfg) {
-                    fIniInput.value = cfg.inicio || "2026-09-01";
-                    fFinInput.value = cfg.fin || "2027-01-31";
-                } else {
-                    fIniInput.value = "2026-09-01";
-                    fFinInput.value = "2027-01-31";
-                    await set(campaniaRef, { inicio: "2026-09-01", fin: "2027-01-31" });
+                    fIniInput.value = cfg.inicio || "";
+                    fFinInput.value = cfg.fin || "";
                 }
                 verificarYPrellenarFijo();
                 renderCalendar();
                 actualizarResumen();
             });
 
-            // Sincronizar Días Festivos y Extra desde Firebase
+            // Sincronizar Días Festivos
             onValue(ref(database, 'diasFestivosCustom'), (snap) => {
-                const data = snap.val();
-                if (data) diasFestivos = data;
+                diasFestivos = snap.val() || [];
                 renderFestivos();
                 renderCalendar();
             });
 
             onValue(ref(database, 'diasExtraCustom'), (snap) => {
-                const data = snap.val();
-                if (data) diasHabilesExtra = data;
+                diasHabilesExtra = snap.val() || [];
                 renderFestivos();
                 renderCalendar();
             });
 
             // Sincronizar Asignaciones
             onValue(ref(database, 'directorioMACs'), (snapshot) => {
-                const data = snapshot.val();
-                dbRegistros = data ? data : {};
+                dbRegistros = snapshot.val() || {};
                 verificarYPrellenarFijo();
                 renderCalendar();
                 actualizarResumen();
             });
 
-            // Sincronizar Catálogo de Sedes
-            onValue(ref(database, 'catalogoSedes'), async (snapshot) => {
+            // Sincronizar Catálogo de Sedes (Soporta borrado completo)
+            onValue(ref(database, 'catalogoSedes'), (snapshot) => {
                 const data = snapshot.val();
-                if (data) {
-                    catalogoSedes = data;
-                } else {
-                    catalogoSedes = catalogoSedesDefault;
-                    await set(ref(database, 'catalogoSedes'), catalogoSedes);
-                }
+                catalogoSedes = data ? data : [];
                 renderEditorSedes();
                 verificarYPrellenarFijo();
                 renderCalendar();
@@ -702,12 +682,10 @@
             const guardarCambioFechasCampania = async () => {
                 const inicio = document.getElementById('fechaInicio').value;
                 const fin = document.getElementById('fechaFin').value;
-                if (inicio && fin) {
-                    await set(ref(database, 'configuracionCampania'), { inicio, fin });
-                    verificarYPrellenarFijo();
-                    renderCalendar();
-                    actualizarResumen();
-                }
+                await set(ref(database, 'configuracionCampania'), { inicio, fin });
+                verificarYPrellenarFijo();
+                renderCalendar();
+                actualizarResumen();
             };
 
             document.getElementById('fechaInicio').addEventListener('change', guardarCambioFechasCampania);
@@ -817,7 +795,7 @@
             const tbody = document.getElementById('tbodySedes');
             tbody.innerHTML = '';
             if (catalogoSedes.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="${columnasSedes.length + 1}" class="text-center text-muted py-3">No hay sedes registradas en el catálogo.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="${columnasSedes.length + 1}" class="text-center text-muted py-3">No hay sedes registradas en el catálogo. Suba un archivo CSV o cree un nuevo registro.</td></tr>`;
                 return;
             }
             catalogoSedes.forEach((fila, index) => {
@@ -867,7 +845,9 @@
             if(confirm("¿Eliminar esta sede?")) { 
                 catalogoSedes.splice(i, 1); 
                 try {
-                    await set(ref(database, 'catalogoSedes'), catalogoSedes);
+                    // Si el catálogo queda vacío, enviamos null para borrarlo en Firebase
+                    const payload = catalogoSedes.length > 0 ? catalogoSedes : null;
+                    await set(ref(database, 'catalogoSedes'), payload);
                 } catch (e) {
                     console.error("Error al actualizar Firebase:", e);
                 }
@@ -1033,13 +1013,18 @@
             selectSede.innerHTML = '';
             const dbKey = `${moduloActual}_${fechaStr.replace(/-/g, '_')}`;
 
-            obtenerSedesPorModulo(moduloActual).forEach(s => {
-                const opt = document.createElement('option');
-                opt.value = s[0];
-                opt.textContent = `[${s[0]}] — ${s[10]} (${s[11]})`;
-                if (dbRegistros[dbKey]?.identificadorSede === s[0]) opt.selected = true;
-                selectSede.appendChild(opt);
-            });
+            const sedesDelModulo = obtenerSedesPorModulo(moduloActual);
+            if (sedesDelModulo.length === 0) {
+                selectSede.innerHTML = '<option value="">No hay sedes registradas para este módulo</option>';
+            } else {
+                sedesDelModulo.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s[0];
+                    opt.textContent = `[${s[0]}] — ${s[10]} (${s[11]})`;
+                    if (dbRegistros[dbKey]?.identificadorSede === s[0]) opt.selected = true;
+                    selectSede.appendChild(opt);
+                });
+            }
             selectSede.dispatchEvent(new Event('change'));
             new bootstrap.Modal(document.getElementById('modalAsignarSede')).show();
         };
@@ -1159,7 +1144,6 @@
             link.click();
         };
 
-        // --- MOTOR DE VACIADO FINAL (MAPEO EXACTO DE COLUMNAS SIN DUPLICAR) ---
         function renderVaciadoFinal() {
             verificarYPrellenarFijo();
             const theadTr = document.getElementById('theadVaciadoTr');
@@ -1171,8 +1155,13 @@
             const modulosOrden = ["050351", "050353", "050354"];
             let filasGeneradas = [];
 
-            const fIniStr = document.getElementById('fechaInicio').value || "2026-09-01";
-            const fFinStr = document.getElementById('fechaFin').value || "2027-01-31";
+            const fIniStr = document.getElementById('fechaInicio').value;
+            const fFinStr = document.getElementById('fechaFin').value;
+            if (!fIniStr || !fFinStr) {
+                tbody.innerHTML = `<tr><td colspan="${columnasVaciado.length}" class="text-center py-4 text-muted fst-italic">Configure las fechas de campaña en el calendario operativo.</td></tr>`;
+                return;
+            }
+
             const inicioCamp = new Date(fIniStr + "T00:00:00");
             const finCamp = new Date(fFinStr + "T00:00:00");
 
@@ -1222,9 +1211,6 @@
                 const diaInicialStr = formatearFechaDDMMYYYY(bloque.inicio);
                 const diaFinalStr = formatearFechaDDMMYYYY(bloque.fin);
                 
-                // Mapeo perfecto respetando el orden exacto de indices del catálogo de sedes (omitimos s[0] que era el id repetido):
-                // s[1]=CVE ENT, s[2]=CVE DTO, s[3]=CVE MPO, s[4]=NOMBRE MPIO, s[5]=CVE MOD, s[6]=TIPO MOD, s[7]=SEC SEDE, s[8]=TIPO SEC, s[9]=CVE LOC, s[10]=NOM LOC, s[11]=DIR, s[12]=MZ, s[13]=CP, s[14]=REF
-                // s[15]=Config TM, s[16]=Config TV, s[17]=Coord X, s[18]=Coord Y
                 const rowVals = [
                     sData[1] || "", 
                     sData[2] || "", 
