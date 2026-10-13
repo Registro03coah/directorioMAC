@@ -144,13 +144,22 @@
             padding: 0;
             margin-left: 2px;
         }
+        
+        /* Pie de página unificado en una sola línea y desactivado en impresión */
         footer {
             background-color: #212529;
             color: #adb5bd;
             font-size: 0.85rem;
             text-align: center;
-            padding: 15px 0;
+            padding: 12px 0;
             margin-top: auto;
+        }
+        footer .footer-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
         }
         
         .status-credential-icon {
@@ -166,7 +175,6 @@
             filter: drop-shadow(0 0 6px #dc3545);
         }
 
-        /* Avatar de administrador más grande en la pantalla de inicio */
         .avatar-admin-home {
             width: 80px;
             height: 80px;
@@ -187,7 +195,7 @@
         @media print {
             body { background: white; padding-top: 0; }
             .no-print { display: none !important; }
-            footer { display: none !important; } /* Ocultar pie de página al imprimir */
+            footer { display: none !important; }
             .modal-dialog { max-width: 100% !important; margin: 0 !important; }
         }
     </style>
@@ -199,10 +207,10 @@
         <div class="container-fluid">
             <a class="navbar-brand d-flex align-items-center" href="#">
                 <i class="fas fa-id-card me-2 status-credential-icon disconnected" id="statusCredentialIcon" title="Estado de Conexión"></i>
-                <span>Directorio MACs</span>
+                <span>Directorios MACs</span>
             </a>
             <div class="d-flex align-items-center">
-                <span class="navbar-text text-light small me-2 fw-bold">v26.0</span>
+                <span class="navbar-text text-light small me-2 fw-bold">v27.0</span>
             </div>
         </div>
     </nav>
@@ -269,16 +277,16 @@
                             <option value="050354">050354 - Móvil / Región Centro</option>
                         </select>
                         <div id="infoHorarioModulo" class="horario-info">
-                            <i class="fas fa-calendar-check text-muted me-1"></i> <strong>Campaña CAI:</strong> <span id="rangoFechasVisual">No configurado</span>
+                            <i class="fas fa-calendar-check text-muted me-1"></i> <strong id="labelPeriodoTxt">Periodo:</strong> <span id="rangoFechasVisual">No configurado</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="col-md-6">
                     <div class="card card-custom p-3 h-100 bg-primary text-white d-flex flex-column justify-content-center align-items-center text-center">
-                        <h6 class="text-uppercase tracking-wider mb-1"><i class="fas fa-clipboard-check me-1"></i> Total Días Trabajados</h6>
-                        <h2 class="display-5 fw-bold mb-0" id="totalDiasTrabajados">0</h2>
-                        <small class="mt-1" id="infoPeriodoActivo">Campaña vigente</small>
+                        <h6 class="text-uppercase tracking-wider mb-1"><i class="fas fa-clipboard-check me-1"></i>Asignación de sedes</h6>
+                        <h3 class="fw-bold mb-0" id="tituloCampaniaHeader">Calendario Operativo</h3>
+                        <small class="mt-1 opacity-75" id="subtituloCampaniaHeader">Campaña vigente</small>
                     </div>
                 </div>
             </div>
@@ -378,15 +386,17 @@
         </div>
     </div>
 
-    <!-- PIE DE PÁGINA (FOOTER) -->
+    <!-- PIE DE PÁGINA (FOOTER) EN UNA SOLA LÍNEA -->
     <footer class="no-print">
         <div class="container">
-            <p class="mb-1">Sistema Web para Directorio de Módulos &copy; 2026 Todos los derechos reservados.</p>
-            <p class="mb-0 text-muted small">Diseñado y desarrollado por <strong class="text-light">Carrivers Design</strong></p>
+            <div class="footer-content">
+                <span>Sistema Web para Directorio de Módulos &copy; 2026 Todos los derechos reservados.</span>
+                <span>Diseñado y desarrollado por <strong class="text-light">Carrivers Design</strong></span>
+            </div>
         </div>
     </footer>
 
-    <!-- MODAL DE INGRESO DE CONTRASEÑA DE ADMINISTRADOR (CON TECLA ENTER) -->
+    <!-- MODAL DE INGRESO DE CONTRASEÑA DE ADMINISTRADOR -->
     <div class="modal fade" id="modalPasswordAdmin" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-sm">
             <div class="modal-content">
@@ -435,23 +445,27 @@
                             </div>
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <div class="card card-custom p-3 h-100 border border-primary">
-                                <h6 class="fw-bold text-primary mb-3"><i class="fas fa-calendar-alt me-2"></i>Periodo Oficial de Campaña</h6>
-                                <div class="row g-2">
-                                    <div class="col-6">
+                                <h6 class="fw-bold text-primary mb-3"><i class="fas fa-calendar-alt me-2"></i>Periodo Oficial de Campaña y Nombre</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
                                         <label class="form-label small fw-bold text-muted">Fecha Inicio</label>
                                         <input type="date" id="fechaInicio" class="form-control form-control-sm">
                                     </div>
-                                    <div class="col-6">
+                                    <div class="col-md-4">
                                         <label class="form-label small fw-bold text-muted">Fecha Fin</label>
                                         <input type="date" id="fechaFin" class="form-control form-control-sm">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-bold text-muted">Nombre de la Campaña</label>
+                                        <input type="text" id="inputNombreCampania" class="form-control form-control-sm border-primary" placeholder="Ej. Campaña CAI 2026-2027">
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <div class="card card-custom p-3 h-100 border border-success">
                                 <h6 class="fw-bold text-success mb-2"><i class="fas fa-calendar-day me-2"></i>Gestión de Días Festivos y Extra</h6>
                                 <div class="input-group input-group-sm mb-2">
@@ -657,6 +671,7 @@
         let mesActivo = 8; 
         let alertaResguardoMostrada = false;
         let edicionCalendarioPermitida = false;
+        let nombreCampaniaGlobal = "";
 
         const columnasVaciado = [
             "CVE ENT", "CVE DTO", "CVE MPO", "NOMBRE MPIO", "CVE DE MODULO", 
@@ -686,7 +701,6 @@
             }
         };
 
-        // Habilitar la tecla Enter en el input de contraseña
         document.getElementById('inputPasswordAdmin').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 verificarPasswordAdmin();
@@ -822,9 +836,12 @@
                 const cfg = snap.val();
                 const fIniInput = document.getElementById('fechaInicio');
                 const fFinInput = document.getElementById('fechaFin');
+                const inputNombreCampania = document.getElementById('inputNombreCampania');
                 if (cfg) {
                     fIniInput.value = cfg.inicio || "";
                     fFinInput.value = cfg.fin || "";
+                    inputNombreCampania.value = cfg.nombreCampania || "";
+                    nombreCampaniaGlobal = cfg.nombreCampania || "";
                 }
                 actualizarRangoVisualCampania();
                 verificarYPrellenarFijo();
@@ -866,18 +883,21 @@
                 actualizarResumen();
             });
 
-            const guardarCambioFechasCampania = async () => {
+            const guardarConfiguracionCampania = async () => {
                 const inicio = document.getElementById('fechaInicio').value;
                 const fin = document.getElementById('fechaFin').value;
-                await set(ref(database, 'configuracionCampania'), { inicio, fin });
+                const nombreCampania = document.getElementById('inputNombreCampania').value;
+                nombreCampaniaGlobal = nombreCampania;
+                await set(ref(database, 'configuracionCampania'), { inicio, fin, nombreCampania });
                 actualizarRangoVisualCampania();
                 verificarYPrellenarFijo();
                 renderCalendar();
                 actualizarResumen();
             };
 
-            document.getElementById('fechaInicio').addEventListener('change', guardarCambioFechasCampania);
-            document.getElementById('fechaFin').addEventListener('change', guardarCambioFechasCampania);
+            document.getElementById('fechaInicio').addEventListener('change', guardarConfiguracionCampania);
+            document.getElementById('fechaFin').addEventListener('change', guardarConfiguracionCampania);
+            document.getElementById('inputNombreCampania').addEventListener('input', guardarConfiguracionCampania);
 
             document.getElementById('btnHacerInhabil').addEventListener('click', async () => {
                 const val = document.getElementById('inputFechaUnica').value;
@@ -983,11 +1003,17 @@
             const ini = document.getElementById('fechaInicio').value;
             const fin = document.getElementById('fechaFin').value;
             const spanVisual = document.getElementById('rangoFechasVisual');
+            const tituloH = document.getElementById('tituloCampaniaHeader');
+            const subH = document.getElementById('subtituloCampaniaHeader');
+
             if (ini && fin) {
                 spanVisual.innerText = `${formatearFechaDDMMYYYY(ini)} al ${formatearFechaDDMMYYYY(fin)}`;
             } else {
-                spanVisual.innerText = "No configurado (Establecer en Panel Admin)";
+                spanVisual.innerText = "No configurado";
             }
+
+            tituloH.innerText = "Calendario Operativo";
+            subH.innerText = nombreCampaniaGlobal ? nombreCampaniaGlobal : "Campaña vigente";
         }
 
         function verificarCampaniaCompleta() {
@@ -1349,7 +1375,6 @@
             });
         }
 
-        // ACTUALIZACIÓN DE TOTAL GENERAL DE VISITAS POR MÓDULO EN EL LISTADO
         function actualizarModalListadoSedes() {
             const container = document.getElementById('modalListadoSedesBody');
             const modulosOrden = ["050351", "050353", "050354"];
@@ -1376,7 +1401,6 @@
                 const sedesMod = Object.values(sedesConteo).filter(s => s.modulo === modCVE);
                 const nombreModLabel = modCVE === "050351" ? "Módulo Fijo 050351 (Monclova)" : (modCVE === "050353" ? "Módulo Semifijo 050353 (Norte)" : "Módulo Móvil 050354 (Región Centro)");
                 
-                // Calcular la suma total de visitas de todas las sedes de este módulo
                 let totalVisitasModulo = sedesMod.reduce((sum, item) => sum + item.visitas, 0);
 
                 html += `<div class="d-flex justify-content-between align-items-center mt-3 border-bottom pb-1">
