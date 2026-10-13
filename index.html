@@ -126,16 +126,21 @@
             padding: 0;
             margin-left: 2px;
         }
+        @media print {
+            body { background: white; padding-top: 0; }
+            .no-print { display: none !important; }
+            .modal-dialog { max-width: 100% !important; margin: 0 !important; }
+        }
     </style>
 </head>
 <body>
 
     <!-- Navbar Fija -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm no-print">
         <div class="container-fluid">
             <a class="navbar-brand" href="#"><i class="fas fa-id-card me-2"></i>Directorio MACs (Cloud)</a>
             <div class="d-flex align-items-center">
-                <span class="navbar-text text-light small me-3 d-none d-md-block">Versión 12.5 - Importador CSV Robusto</span>
+                <span class="navbar-text text-light small me-3 d-none d-md-block">Versión 13.0 - Reportes y Listados Optimizados</span>
                 <button class="btn btn-warning btn-sm fw-bold shadow-sm me-2" type="button" data-bs-toggle="modal" data-bs-target="#modalGestorSedes">
                     <i class="fas fa-edit me-1"></i> Editor Sedes
                 </button>
@@ -173,7 +178,7 @@
 
     <!-- PANTALLA 2: CALENDARIO OPERATIVO -->
     <div id="vistaCalendario" class="container my-4 view-section">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-3 no-print">
             <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="cambiarVista('selector')">
                 <i class="fas fa-arrow-left me-1"></i> Regresar al Menú Principal
             </button>
@@ -208,24 +213,22 @@
                 </div>
             </div>
 
+            <!-- CUADRO VERDE: GESTIÓN UNIFICADA DE DÍAS (FESTIVOS / HÁBILES EXTRA) -->
             <div class="col-md-4">
-                <div class="card card-custom p-3 h-100 d-flex flex-column justify-content-between">
+                <div class="card card-custom p-3 h-100 d-flex flex-column justify-content-between border border-success">
                     <div>
-                        <label class="form-label fw-bold text-danger mb-1"><i class="fas fa-ban me-1"></i> Días Festivos / Inhábiles</label>
+                        <label class="form-label fw-bold text-success mb-1 small"><i class="fas fa-calendar-day me-1"></i> Gestión de Días Festivos / Hábiles Extra</label>
                         <div class="input-group input-group-sm mb-2">
-                            <input type="date" id="inputFestivo" class="form-control">
-                            <button class="btn btn-outline-danger" type="button" id="btnAgregarFestivo">Inhábil</button>
+                            <input type="date" id="inputFechaUnica" class="form-control">
+                            <button class="btn btn-danger" type="button" id="btnHacerInhabil" title="Marcar como Inhábil"><i class="fas fa-ban me-1"></i> Inhábil</button>
+                            <button class="btn btn-primary" type="button" id="btnHacerExtraHabil" title="Marcar como Hábil Extra"><i class="fas fa-calendar-plus me-1"></i> Hábil Extra</button>
                         </div>
-                        <label class="form-label fw-bold text-primary mb-1 small"><i class="fas fa-calendar-plus me-1"></i> Días Hábiles Extra (Ej. Domingos)</label>
-                        <div class="input-group input-group-sm mb-2">
-                            <input type="date" id="inputExtraHabil" class="form-control">
-                            <button class="btn btn-outline-primary" type="button" id="btnAgregarExtraHabil">Hábil Extra</button>
-                        </div>
-                        <div style="max-height: 70px; overflow-y: auto;" id="listaFestivos" class="border rounded p-1 bg-light small mb-2">
+                        <div style="max-height: 80px; overflow-y: auto;" id="listaFestivos" class="border rounded p-1 bg-light small mb-2">
                             <span class="text-muted fst-italic">Sin días registrados.</span>
                         </div>
                     </div>
-                    <button class="btn btn-outline-dark btn-sm w-100 fw-bold" data-bs-toggle="modal" data-bs-target="#modalListadoSedes">
+                    <!-- CUADRO MORADO: BOTÓN DE LISTADO DE SEDES Y TOTALES -->
+                    <button class="btn btn-outline-dark btn-sm w-100 fw-bold border-2 border-dark" data-bs-toggle="modal" data-bs-target="#modalListadoSedes">
                         <i class="fas fa-list-ul me-1"></i> Listado de Sedes y Totales
                     </button>
                 </div>
@@ -243,7 +246,7 @@
         <div class="card card-custom mb-4">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-calendar-day me-2 text-primary"></i>Calendario Operativo y Sedes</h5>
-                <div class="btn-group" role="group" id="mesSelectorBtns">
+                <div class="btn-group no-print" role="group" id="mesSelectorBtns">
                     <button type="button" class="btn btn-outline-primary active" data-mes="8">Septiembre</button>
                     <button type="button" class="btn btn-outline-primary" data-mes="9">Octubre</button>
                     <button type="button" class="btn btn-outline-primary" data-mes="10">Noviembre</button>
@@ -292,7 +295,7 @@
 
     <!-- PANTALLA 3: VACIADO FINAL -->
     <div id="vistaVaciado" class="container-fluid my-4 view-section px-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-3 no-print">
             <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="cambiarVista('selector')">
                 <i class="fas fa-arrow-left me-1"></i> Regresar al Menú Principal
             </button>
@@ -345,28 +348,23 @@
         </div>
     </div>
 
+    <!-- MODAL LISTADO DE SEDES Y TOTALES (VENTANA FLOTANTE ORDENADA POR MÓDULOS) -->
     <div class="modal fade" id="modalListadoSedes" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
-                <div class="modal-header bg-dark text-white">
-                    <h5 class="modal-title fw-bold"><i class="fas fa-list-ul me-2"></i>Listado General de Sedes</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-striped align-middle">
-                            <thead class="table-secondary">
-                                <tr>
-                                    <th>Módulo</th>
-                                    <th>Sede</th>
-                                    <th>Localidad</th>
-                                    <th class="text-center">Días</th>
-                                    <th>Fechas</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tablaModalListadoSedes"></tbody>
-                        </table>
+                <div class="modal-header bg-dark text-white no-print">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-list-ul me-2"></i>Listado de Sedes con Fechas y Totales</h5>
+                    <div>
+                        <button class="btn btn-light btn-sm fw-bold me-2" onclick="window.print()"><i class="fas fa-print me-1"></i> Imprimir</button>
+                        <button class="btn btn-success btn-sm fw-bold me-2" onclick="exportarListadoSedesTxt()"><i class="fas fa-download me-1"></i> Descargar</button>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
+                </div>
+                <div class="modal-body" id="modalListadoSedesBody">
+                    <div class="text-center text-muted py-3">Cargando listado...</div>
+                </div>
+                <div class="modal-footer no-print">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
@@ -481,11 +479,12 @@
             ["252-1 don martin congregacion", "5", "3", "15", "JUAREZ", "050354", "m", "252", "R", "9", "DON MARTIN CONGREGACION", "CALLE BENITO JUÁREZ S/N LOCALIDAD CONGREGACIÓN DON MARTÍN", "", "125410", "ENTRE LA CALLE RODOLFO ORTIZ Y LA CALLE ERNESTO ZEDILLO UNIDAD DE SALUD IMSS BIENESTAR", "LUN A VIER DE 09:00 a. m. A 04:00 p. m.", "B+2", "-100.618815", "27.527313"]
         ];
 
+        // ENCABEZADOS EXACTOS SOLICITADOS (ANEXO 1)
         const columnasVaciado = [
-            "CVE ENT", "CVE DTO", "CVE MPO", "NOMBRE MUNICIPIO", "CVE DE MÓDULO", "TIPO DE MÓDULO", 
-            "SECCIÓN SEDE", "TIPO SECCIÓN", "CVE LOCALIDAD", "NOMBRE LOCALIDAD", "DIRECCIÓN", "MZ", 
-            "CÓDIGO POSTAL", "REFERENCIAS", "DÍAS inicio", "DÍAS final", "HORARIO", 
-            "TURNO MATUTINO", "TURNO VESPERTINO", "X", "Y"
+            "identificador sede", "CVE ENT", "CVE DTO", "CVE MPO", "NOMBRE MPIO", "CVE DE MODULO", 
+            "TIPO DE MODULO", "SECCION SEDE", "TIPO SECCION", "CVE LOCALIDAD", "NOMBRE LOCALIDAD", 
+            "DIRECCION", "MZ", "CODIGO POSTAL", "REFERENCIAS", "HORARIO", 
+            "Configuracion tm", "Configuracion tv", "Coordenadas X", "Coordenadas y", "DIAS"
         ];
 
         const horariosTexto = {
@@ -606,30 +605,35 @@
                 actualizarResumen();
             });
 
-            document.getElementById('btnAgregarFestivo').addEventListener('click', () => {
-                const val = document.getElementById('inputFestivo').value;
-                if (val && !diasFestivos.includes(val)) {
+            // GESTIÓN UNIFICADA DE DÍAS (CUADRO VERDE)
+            document.getElementById('btnHacerInhabil').addEventListener('click', () => {
+                const val = document.getElementById('inputFechaUnica').value;
+                if (!val) { alert("Seleccione una fecha."); return; }
+                if (diasHabilesExtra.includes(val)) diasHabilesExtra = diasHabilesExtra.filter(d => d !== val);
+                if (!diasFestivos.includes(val)) {
                     diasFestivos.push(val);
                     diasFestivos.sort();
-                    renderFestivos();
-                    verificarYPrellenarFijo();
-                    renderCalendar();
-                    actualizarResumen();
-                    document.getElementById('inputFestivo').value = '';
                 }
+                renderFestivos();
+                verificarYPrellenarFijo();
+                renderCalendar();
+                actualizarResumen();
+                document.getElementById('inputFechaUnica').value = '';
             });
 
-            document.getElementById('btnAgregarExtraHabil').addEventListener('click', () => {
-                const val = document.getElementById('inputExtraHabil').value;
-                if (val && !diasHabilesExtra.includes(val)) {
+            document.getElementById('btnHacerExtraHabil').addEventListener('click', () => {
+                const val = document.getElementById('inputFechaUnica').value;
+                if (!val) { alert("Seleccione una fecha."); return; }
+                if (diasFestivos.includes(val)) diasFestivos = diasFestivos.filter(d => d !== val);
+                if (!diasHabilesExtra.includes(val)) {
                     diasHabilesExtra.push(val);
                     diasHabilesExtra.sort();
-                    renderFestivos();
-                    verificarYPrellenarFijo();
-                    renderCalendar();
-                    actualizarResumen();
-                    document.getElementById('inputExtraHabil').value = '';
                 }
+                renderFestivos();
+                verificarYPrellenarFijo();
+                renderCalendar();
+                actualizarResumen();
+                document.getElementById('inputFechaUnica').value = '';
             });
 
             document.getElementById('btnGuardarAsignacion').addEventListener('click', async () => {
@@ -748,7 +752,6 @@
             link.click();
         };
 
-        // PARSER CSV ROBUSTO (Soporte completo para comillas y textos con comas/saltos)
         function parseCSVLine(text) {
             let result = [];
             let cell = '';
@@ -788,14 +791,13 @@
                         let line = lines[i].trim();
                         if (line !== "") {
                             let vals = parseCSVLine(line);
-                            // Limpiar comillas envolventes si las hay
                             vals = vals.map(v => v.replace(/^"|"$/g, '').trim());
                             while (vals.length < columnasSedes.length) vals.push("");
                             catalogoSedes.push(vals.slice(0, columnasSedes.length));
                         }
                     }
                     renderEditorSedes();
-                    alert("¡Catálogo importado con éxito, textos y direcciones completos!");
+                    alert("¡Catálogo importado con éxito!");
                 }
             };
         };
@@ -938,29 +940,89 @@
             });
         }
 
+        // VENTANA FLOTANTE: LISTADO DE SEDES Y TOTALES ORDENADO POR MÓDULOS (050351, 050353, 050354)
         function actualizarModalListadoSedes() {
-            const tbody = document.getElementById('tablaModalListadoSedes');
-            tbody.innerHTML = '';
-            let general = {};
-            catalogoSedes.forEach(s => general[`${s[5]}_${s[0]}`] = { modulo: s[5], idSede: s[0], localidad: s[10], fechas: [] });
+            const container = document.getElementById('modalListadoSedesBody');
+            const modulosOrden = ["050351", "050353", "050354"];
+            
+            // Contabilizar cuantas fechas tiene cada sede asignada
+            let sedesConteo = {};
             Object.values(dbRegistros).forEach(reg => {
                 if (reg?.modulo && reg?.identificadorSede) {
-                    const k = `${reg.modulo}_${reg.identificadorSede}`;
-                    if (general[k]) general[k].fechas.push(formatearFechaDDMMYYYY(reg.fecha));
+                    const key = `${reg.modulo}_${reg.identificadorSede}`;
+                    if (!sedesConteo[key]) {
+                        const sData = catalogoSedes.find(s => s[0] === reg.identificadorSede);
+                        sedesConteo[key] = {
+                            modulo: reg.modulo,
+                            idSede: reg.identificadorSede,
+                            localidad: sData ? sData[10] : reg.identificadorSede,
+                            visitas: 0
+                        };
+                    }
+                    sedesConteo[key].visitas++;
                 }
             });
-            Object.values(general).forEach(item => {
-                tbody.innerHTML += `<tr>
-                    <td><span class="badge bg-secondary">${item.modulo}</span></td>
-                    <td class="fw-bold text-primary">${item.idSede}</td>
-                    <td>${item.localidad}</td>
-                    <td class="text-center"><span class="badge bg-primary rounded-pill px-3">${item.fechas.length} días</span></td>
-                    <td class="small text-muted">${item.fechas.length > 0 ? item.fechas.join(', ') : '<span class="fst-italic text-muted">Sin asignar</span>'}</td>
-                </tr>`;
+
+            let html = '';
+            modulosOrden.forEach(modCVE => {
+                const sedesMod = Object.values(sedesConteo).filter(s => s.modulo === modCVE);
+                const nombreModLabel = modCVE === "050351" ? "Módulo Fijo 050351 (Monclova)" : (modCVE === "050353" ? "Módulo Semifijo 050353 (Norte)" : "Módulo Móvil 050354 (Región Centro)");
+                
+                html += `<h6 class="fw-bold text-primary mt-3 border-bottom pb-1"><i class="fas fa-building me-1"></i> ${nombreModLabel}</h6>`;
+                
+                if (sedesMod.length === 0) {
+                    html += `<p class="text-muted small fst-italic ms-3">Sin sedes con fechas asignadas en este módulo.</p>`;
+                } else {
+                    html += `<ul class="list-group list-group-flush mb-3">`;
+                    sedesMod.forEach(item => {
+                        html += `<li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                            <span><strong>LOCALIDAD:</strong> ${item.localidad} <span class="text-muted small">(${item.idSede})</span></span>
+                            <span class="badge bg-primary rounded-pill px-3 py-2">VISITAS: ${item.visitas}</span>
+                        </li>`;
+                    });
+                    html += `</ul>`;
+                }
             });
+
+            container.innerHTML = html;
         }
 
-        // --- MOTOR DE VACIADO FINAL ---
+        window.exportarListadoSedesTxt = function() {
+            let contenido = "LISTADO DE SEDES Y TOTALES - DIRECTORIO MACS\n==========================================\n\n";
+            const modulosOrden = ["050351", "050353", "050354"];
+            
+            let sedesConteo = {};
+            Object.values(dbRegistros).forEach(reg => {
+                if (reg?.modulo && reg?.identificadorSede) {
+                    const key = `${reg.modulo}_${reg.identificadorSede}`;
+                    if (!sedesConteo[key]) {
+                        const sData = catalogoSedes.find(s => s[0] === reg.identificadorSede);
+                        sedesConteo[key] = { modulo: reg.modulo, localidad: sData ? sData[10] : reg.identificadorSede, visitas: 0 };
+                    }
+                    sedesConteo[key].visitas++;
+                }
+            });
+
+            modulosOrden.forEach(modCVE => {
+                contenido += `--- MÓDULO: ${modCVE} ---\n`;
+                const sedesMod = Object.values(sedesConteo).filter(s => s.modulo === modCVE);
+                if(sedesMod.length === 0) {
+                    contenido += "Sin sedes con fechas asignadas.\n";
+                } else {
+                    sedesMod.forEach(item => {
+                        contenido += `LOCALIDAD: ${item.localidad}   VISITAS: ${item.visitas}\n`;
+                    });
+                }
+                contenido += "\n";
+            });
+
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(new Blob([contenido], { type: 'text/plain;charset=utf-8;' }));
+            link.download = "listado_sedes_visitas.txt";
+            link.click();
+        };
+
+        // --- MOTOR DE VACIADO FINAL (ORDEN EXACTO ANEXO 1) ---
         function renderVaciadoFinal() {
             verificarYPrellenarFijo();
             const theadTr = document.getElementById('theadVaciadoTr');
@@ -1020,13 +1082,31 @@
 
             filasGeneradas.forEach(bloque => {
                 const sData = catalogoSedes.find(s => s[0] === bloque.sede) || [];
+                const rangoDiasStr = `${formatearFechaDDMMYYYY(bloque.inicio)} al ${formatearFechaDDMMYYYY(bloque.fin)}`;
+                
+                // Orden estricto según Anexo 1
                 const rowVals = [
-                    sData[1] || "", sData[2] || "", sData[3] || "", sData[4] || "", sData[5] || "", sData[6] || "", 
-                    sData[7] || "", sData[8] || "", sData[9] || "", sData[10] || "", sData[11] || "", sData[12] || "", 
-                    sData[13] || "", sData[14] || "", 
-                    formatearFechaDDMMYYYY(bloque.inicio), 
-                    formatearFechaDDMMYYYY(bloque.fin), 
-                    horariosTexto[sData[5]] || "", sData[15] || "", sData[16] || "", sData[17] || "", sData[18] || ""
+                    sData[0] || "", // identificador sede
+                    sData[1] || "", // CVE ENT
+                    sData[2] || "", // CVE DTO
+                    sData[3] || "", // CVE MPO
+                    sData[4] || "", // NOMBRE MPIO
+                    sData[5] || "", // CVE DE MODULO
+                    sData[6] || "", // TIPO DE MODULO
+                    sData[7] || "", // SECCION SEDE
+                    sData[8] || "", // TIPO SECCION
+                    sData[9] || "", // CVE LOCALIDAD
+                    sData[10] || "", // NOMBRE LOCALIDAD
+                    sData[11] || "", // DIRECCION
+                    sData[12] || "", // MZ
+                    sData[13] || "", // CODIGO POSTAL
+                    sData[14] || "", // REFERENCIAS
+                    horariosTexto[sData[5]] || "", // HORARIO
+                    sData[15] || "", // Configuracion tm
+                    sData[16] || "", // Configuracion tv
+                    sData[17] || "", // Coordenadas X
+                    sData[18] || "", // Coordenadas y
+                    rangoDiasStr     // DIAS
                 ];
 
                 tbody.innerHTML += `<tr>` + rowVals.map(v => `<td>${v}</td>`).join('') + `</tr>`;
