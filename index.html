@@ -8,8 +8,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- FontAwesome para iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Librería SheetJS para exportar usando tu plantilla de Excel oficial -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Librería ExcelJS para preservar formatos, colores, fuentes y bordes de la plantilla oficial -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <style>
         body {
             background-color: #f4f6f9;
@@ -193,7 +193,7 @@
                 <span>Directorio MACs</span>
             </a>
             <div class="d-flex align-items-center">
-                <span class="navbar-text text-light small me-2 fw-bold">v22.0</span>
+                <span class="navbar-text text-light small me-2 fw-bold">v23.0</span>
             </div>
         </div>
     </nav>
@@ -348,9 +348,9 @@
                     <button class="btn btn-info btn-sm fw-bold text-white" onclick="sincronizarYActualizarTodo()">
                         <i class="fas fa-sync-alt me-1"></i> Actualizar
                     </button>
-                    <!-- BOTÓN PARA DESCARGAR USANDO TU PLANTILLA OFICIAL DE EXCEL -->
-                    <button class="btn btn-success btn-sm fw-bold" onclick="exportarExcelOficialPlantilla()">
-                        <i class="fas fa-file-excel me-1"></i> Descargar Excel Oficial
+                    <!-- BOTÓN PARA DESCARGAR USANDO TU PLANTILLA OFICIAL RESPETANDO FORMATOS -->
+                    <button class="btn btn-success btn-sm fw-bold" onclick="exportarExcelOficialPlantillaConEstilos()">
+                        <i class="fas fa-file-excel me-1"></i> Descargar Excel Oficial (Con Formato)
                     </button>
                 </div>
             </div>
@@ -551,7 +551,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title fw-bold" id="modalEditarRegistroTitulo">Formulario de Sede</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="editIndexSede">
@@ -1424,20 +1424,18 @@
             });
         }
 
-        // FUNCIÓN PARA DESCARGAR USANDO TU PLANTILLA OFICIAL DE EXCEL ("Directorio_de_modulos.xlsx")
-        window.exportarExcelOficialPlantilla = async function() {
+        // FUNCIÓN AVANZADA CON EXCELJS PARA COPIAR VALORES RESPETANDO FORMATOS, BORDES Y ESTILOS DE LA FILA 11
+        window.exportarExcelOficialPlantillaConEstilos = async function() {
             try {
-                // Descarga el archivo de plantilla que pusiste en GitHub junto con index.html
                 const response = await fetch('Directorio_de_modulos.xlsx');
                 if (!response.ok) throw new Error("No se pudo cargar la plantilla Directorio_de_modulos.xlsx");
                 const arrayBuffer = await response.arrayBuffer();
 
-                // Lee el libro de Excel con SheetJS
-                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                const workbook = new ExcelJS.Workbook();
+                await workbook.xlsx.load(arrayBuffer);
                 
-                // Busca la hoja 'Anexo MACS' (o la primera si no la encuentra exactamente)
-                const nombreHoja = workbook.SheetNames.find(n => n.toLowerCase().includes('anexo macs')) || workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[nombreHoja];
+                // Busca la hoja 'Anexo MACS' (o la primera si no la encuentra)
+                let worksheet = workbook.worksheets.find(ws => ws.name.toLowerCase().includes('anexo macs')) || workbook.worksheets[0];
 
                 const datosNuevos = generarFilasDirectorio();
                 if (datosNuevos.length === 0) {
@@ -1445,24 +1443,43 @@
                     return;
                 }
 
-                // Inserta los datos a partir de la celda A11 (fila 11, columna A => índice de celda A11)
+                // Tomamos como referencia el estilo de la celda de la fila 11 (índice 11) si existe
+                const filaReferencia = worksheet.getRow(11);
+
                 datosNuevos.forEach((filaDatos, rowIndex) => {
+                    const numeroFilaActual = 11 + rowIndex;
+                    const filaActual = worksheet.getRow(numeroFilaActual);
+
                     filaDatos.forEach((valorCelda, colIndex) => {
-                        const cellAddress = XLSX.utils.encode_cell({ r: 10 + rowIndex, c: colIndex }); // r: 10 es la fila 11 (0-indexed)
-                        worksheet[cellAddress] = { t: 's', v: valorCelda };
+                        const numeroColumnaActual = colIndex + 1; // ExcelJS usa 1-based index para columnas
+                        const celdaActual = filaActual.getCell(numeroColumnaActual);
+
+                        // Asigna el valor
+                        celdaActual.value = valorCelda;
+
+                        // Copia el estilo (fuente, bordes, alineación, relleno) de la fila 11 de la plantilla para mantener la uniformidad exacta
+                        const celdaReferencia = filaReferencia.getCell(numeroColumnaActual);
+                        if (celdaReferencia && celdaReferencia.style) {
+                            celdaActual.font = Object.assign({}, celdaReferencia.font);
+                            celdaActual.alignment = Object.assign({}, celdaReferencia.alignment);
+                            celdaActual.border = Object.assign({}, celdaReferencia.border);
+                            celdaActual.fill = Object.assign({}, celdaReferencia.fill);
+                            celdaActual.numFmt = celdaReferencia.numFmt;
+                        }
                     });
+                    filaActual.commit();
                 });
 
-                // Actualiza el rango de la hoja para que incluya las nuevas filas sin alterar las cabeceras (filas 1 a 10)
-                const ultimaFila = 10 + datosNuevos.length;
-                const ultimaColumnaLetra = XLSX.utils.encode_col(columnasVaciado.length - 1);
-                worksheet['!ref'] = `A1:${ultimaColumnaLetra}${Math.max(ultimaFila, 20)}`;
-
-                // Escribe el archivo y dispara la descarga en el navegador
-                XLSX.writeFile(workbook, "Directorio_de_Modulos_Distrito03_Oficial.xlsx");
+                // Genera el archivo modificado y lo descarga automáticamente
+                const buffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = "Directorio_de_Modulos_Distrito03_Oficial.xlsx";
+                link.click();
             } catch (err) {
-                console.error("Error al exportar con plantilla:", err);
-                alert("Asegúrate de que el archivo 'Directorio_de_modulos.xlsx' esté en tu repositorio de GitHub junto a index.html. Usando respaldo CSV alternativo...");
+                console.error("Error al exportar con ExcelJS:", err);
+                alert("Asegúrate de que el archivo 'Directorio_de_modulos.xlsx' esté en GitHub junto a index.html. Usando respaldo CSV alternativo...");
                 exportarVaciadoCSV();
             }
         };
