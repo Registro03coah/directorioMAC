@@ -210,7 +210,7 @@
                 <span>Directorios MACs</span>
             </a>
             <div class="d-flex align-items-center">
-                <span class="navbar-text text-light small me-2 fw-bold">v28.0</span>
+                <span class="navbar-text text-light small me-2 fw-bold">v29.0</span>
             </div>
         </div>
     </nav>
@@ -284,8 +284,9 @@
 
                 <div class="col-md-6">
                     <div class="card card-custom p-3 h-100 bg-primary text-white d-flex flex-column justify-content-center align-items-center text-center">
-                        <h3 class="fw-bold mb-1" id="tituloCampaniaHeader">Calendario Operativo</h3>
-                        <div class="small opacity-75 fw-bold" id="subtituloCampaniaHeader">Campaña vigente</div>
+                        <h6 class="text-uppercase tracking-wider mb-1"><i class="fas fa-clipboard-check me-1"></i> Total Días Trabajados</h6>
+                        <h2 class="display-5 fw-bold mb-0" id="totalDiasTrabajados">0</h2>
+                        <small class="mt-1 fw-bold" id="subtituloCampaniaHeader">Campaña vigente</small>
                     </div>
                 </div>
             </div>
@@ -698,7 +699,7 @@
                 new bootstrap.Modal(document.getElementById('modalPanelAdmin')).show();
             } else {
                 alert("Contraseña incorrecta.");
-                passInput.value = ''; // Borra automáticamente el campo al fallar
+                passInput.value = '';
                 passInput.focus();
             }
         };
@@ -1005,7 +1006,6 @@
             const ini = document.getElementById('fechaInicio').value;
             const fin = document.getElementById('fechaFin').value;
             const spanVisual = document.getElementById('rangoFechasVisual');
-            const tituloH = document.getElementById('tituloCampaniaHeader');
             const subH = document.getElementById('subtituloCampaniaHeader');
 
             if (ini && fin) {
@@ -1014,7 +1014,6 @@
                 spanVisual.innerText = "No configurado";
             }
 
-            tituloH.innerText = "Calendario Operativo";
             subH.innerText = nombreCampaniaGlobal ? nombreCampaniaGlobal : "Campaña vigente";
         }
 
@@ -1358,6 +1357,7 @@
                 }
             });
 
+            document.getElementById('totalDiasTrabajados').innerText = total;
             const keys = Object.keys(conteo);
             if (keys.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-3">Sin días asignados.</td></tr>`;
