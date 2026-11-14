@@ -787,30 +787,36 @@
             }
         }
 
-        function verificarYPrellenarFijo() {
-            const fIniStr = document.getElementById('fechaInicio').value;
-            const fFinStr = document.getElementById('fechaFin').value;
-            if (!fIniStr || !fFinStr) return;
+function verificarYPrellenarFijo() {
+    const fIniStr = document.getElementById('fechaInicio').value;
+    const fFinStr = document.getElementById('fechaFin').value;
+    if (!fIniStr || !fFinStr) return;
 
-            const sedesFijo = obtenerSedesPorModulo("050351");
-            if (sedesFijo.length === 0) return;
-            const sedeFijaDefault = sedesFijo[0][0];
+    const sedesFijo = obtenerSedesPorModulo("050351");
+    if (sedesFijo.length === 0) return;
+    const sedeFijaDefault = sedesFijo[0][0]; // Toma la sede actual del catálogo
 
-            let curr = new Date(fIniStr + "T00:00:00");
-            const fin = new Date(fFinStr + "T00:00:00");
+    let curr = new Date(fIniStr + "T00:00:00");
+    const fin = new Date(fFinStr + "T00:00:00");
 
-            while (curr <= fin) {
-                const fStr = curr.toISOString().split('T')[0];
-                const dbKey = `050351_${fStr.replace(/-/g, '_')}`;
+    while (curr <= fin) {
+        const fStr = curr.toISOString().split('T')[0];
+        const dbKey = `050351_${fStr.replace(/-/g, '_')}`;
 
-                if (esDiaHabil(fStr, "050351")) {
-                    if (!dbRegistros[dbKey] || !dbRegistros[dbKey].identificadorSede) {
-                        dbRegistros[dbKey] = { modulo: "050351", fecha: fStr, identificadorSede: sedeFijaDefault };
-                    }
-                }
-                curr.setDate(curr.getDate() + 1);
+        if (esDiaHabil(fStr, "050351")) {
+            // Forzamos a que si no existe o si cambió la sede por defecto del catálogo, se actualice en memoria y Firebase
+            if (!dbRegistros[dbKey] || dbRegistros[dbKey].identificadorSede !== sedeFijaDefault) {
+                dbRegistros[dbKey] = { modulo: "050351", fecha: fStr, identificadorSede: sedeFijaDefault };
+                
+                // Opcional: Actualizar directamente en Firebase para persistirlo
+                set(ref(database, 'directorioMACs/' + dbKey), dbRegistros[dbKey]).catch(err => {
+                    console.error("Error al actualizar fijo en Firebase:", err);
+                });
             }
         }
+        curr.setDate(curr.getDate() + 1);
+    }
+}
 
         document.addEventListener('DOMContentLoaded', () => {
             renderHeaderGestor();
