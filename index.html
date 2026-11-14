@@ -804,11 +804,11 @@ function verificarYPrellenarFijo() {
         const dbKey = `050351_${fStr.replace(/-/g, '_')}`;
 
         if (esDiaHabil(fStr, "050351")) {
-            // Forzamos a que si no existe o si cambió la sede por defecto del catálogo, se actualice en memoria y Firebase
+            // Si no existe el registro O si la sede guardada es diferente a la del catálogo actual, la actualizamos
             if (!dbRegistros[dbKey] || dbRegistros[dbKey].identificadorSede !== sedeFijaDefault) {
                 dbRegistros[dbKey] = { modulo: "050351", fecha: fStr, identificadorSede: sedeFijaDefault };
                 
-                // Opcional: Actualizar directamente en Firebase para persistirlo
+                // Actualiza en Firebase solo los días del 050351 sin tocar los demás módulos
                 set(ref(database, 'directorioMACs/' + dbKey), dbRegistros[dbKey]).catch(err => {
                     console.error("Error al actualizar fijo en Firebase:", err);
                 });
