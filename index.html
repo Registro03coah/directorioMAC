@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.1">
     <title>Sistema Web para Directorio de Módulos</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -741,11 +741,11 @@
             return fStr;
         }
 
-        window.sincronizarYActualizarTodo = function(desdeEditor = false) {
+window.sincronizarYActualizarTodo = function(desdeEditor = false) {
             verificarYPrellenarFijo();
             renderCalendar();
             actualizarResumen();
-            renderVaciadoFinal();
+            renderVaciadoFinal(); // <-- Esto obliga a recalcular la tabla de coordenadas al instante
             if (desdeEditor) {
                 bootstrap.Modal.getInstance(document.getElementById('modalGestorSedes'))?.hide();
                 bootstrap.Modal.getInstance(document.getElementById('modalPanelAdmin'))?.hide();
@@ -1564,16 +1564,19 @@ function verificarYPrellenarFijo() {
             return datosFilas;
         }
 
-        function renderVaciadoFinal() {
+       function renderVaciadoFinal() {
             const theadTr = document.getElementById('theadVaciadoTr');
             const tbody = document.getElementById('tbodyVaciado');
             
             theadTr.innerHTML = columnasVaciado.map(c => `<th>${c}</th>`).join('');
             tbody.innerHTML = '';
 
+            // Forzamos la verificación previa para asegurar que tome los cambios más recientes del fijo y los catálogos
+            verificarYPrellenarFijo();
+
             const datos = generarFilasDirectorio();
             if (datos.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="${columnasVaciado.length}" class="text-center py-4 text-muted fst-italic">Configure las fechas de campaña e inste asignaciones en el calendario.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="${columnasVaciado.length}" class="text-center py-4 text-muted fst-italic">Configure las fechas de campaña e inserte asignaciones en el calendario.</td></tr>`;
                 return;
             }
 
