@@ -3,74 +3,382 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema Principal - Módulos MAC</title>
+    <title>Sistema Web para Directorio de Módulos</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- FontAwesome para iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Librería ExcelJS para preservar formatos, colores, fuentes y bordes de la plantilla oficial -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <style>
         body {
             background-color: #f4f6f9;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding-top: 70px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
-        .navbar-brand {
-            font-weight: bold;
+        .main-content {
+            flex: 1;
         }
-        .card-dashboard {
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1030;
+        }
+        .card-custom {
             border: none;
-            border-radius: 10px;
-            box-shadow: 0 0.25rem 0.5rem rgba(0,0,0,0.05);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+            border-radius: 0.75rem;
+            transition: all 0.2s ease-in-out;
+        }
+        .card-action-btn {
+            cursor: pointer;
+        }
+        .card-action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.1);
+            border-color: #0d6efd !important;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+        }
+        .calendar-day-header {
+            text-align: center;
+            font-weight: 600;
+            color: #6c757d;
+            font-size: 0.8rem;
+            padding: 4px 0;
+        }
+        .calendar-cell {
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            min-height: 85px;
+            padding: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+        .calendar-cell:hover:not(.disabled) {
+            background-color: #f8f9fa;
+            border-color: #0d6efd;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .calendar-cell.disabled {
+            background-color: #f8f9fa;
+            color: #adb5bd;
+            cursor: not-allowed;
+            border: 1px dashed #dee2e6;
+        }
+        .calendar-cell.festive {
+            background-color: #ffe3e3 !important;
+            border-color: #ff8787 !important;
+        }
+        .calendar-cell.extra-habil {
+            background-color: #e7f5ff !important;
+            border-color: #74c0fc !important;
+        }
+        
+        .theme-050351 { background-color: #f0f7ff; border-color: #cfe2ff; } 
+        .theme-050353 { background-color: #fff9e6; border-color: #ffe8a1; } 
+        .theme-050354 { background-color: #e8f5e9; border-color: #c8e6c9; } 
+
+        .badge-sede-050351 { background-color: #0d6efd !important; color: #ffffff !important; }
+        .badge-sede-050353 { background-color: #fd7e14 !important; color: #ffffff !important; }
+        .badge-sede-050354 { background-color: #198754 !important; color: #ffffff !important; }
+
+        .day-number {
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+        .badge-sede {
+            font-size: 0.65rem;
+            white-space: normal;
+            word-break: break-word;
+            text-align: left;
+            padding: 3px;
+            border-radius: 4px;
+        }
+        .horario-info {
+            font-size: 0.8rem;
+            color: #495057;
+            background: #e9ecef;
+            padding: 6px 10px;
+            border-radius: 5px;
+        }
+
+        #modalGestorSedes th, #tablaVaciadoFinal th { background-color: #880e4f !important; color: white !important; white-space: nowrap; font-size: 0.75rem; padding: 8px; text-align: center; }
+        #tablaVaciadoFinal td { vertical-align: middle; white-space: nowrap; font-size: 0.75rem; padding: 6px; text-align: center; }
+        #tablaVaciadoFinal td:nth-child(11) { text-align: left; }
+        
+        #modalGestorSedes th { background-color: #1b396b !important; }
+        #modalGestorSedes td { vertical-align: middle; white-space: nowrap; max-width: 180px; overflow: hidden; text-overflow: ellipsis; font-size: 0.8rem; padding: 8px;}
+        #modalGestorSedes td:hover { white-space: normal; word-break: break-word; overflow: visible; background-color: #f8f9fa; z-index: 10; position: relative;}
+        
+        .table-gestor-wrapper { max-height: calc(100vh - 200px); overflow-y: auto; overflow-x: auto; }
+        .toolbar-gestor { background-color: #f1f3f5; border-radius: 8px; padding: 10px; margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+        
+        .badge-item-delete {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin: 2px;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+        }
+        .badge-item-delete .btn-close {
+            font-size: 0.55rem;
+            padding: 0;
+            margin-left: 2px;
+        }
+        
+        /* Pie de página unificado en una sola línea y desactivado en impresión */
+        footer {
+            background-color: #212529;
+            color: #adb5bd;
+            font-size: 0.85rem;
+            text-align: center;
+            padding: 12px 0;
+            margin-top: auto;
+        }
+        footer .footer-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .status-credential-icon {
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+        .status-credential-icon.connected {
+            color: #28a745;
+            filter: drop-shadow(0 0 6px #28a745);
+        }
+        .status-credential-icon.disconnected {
+            color: #dc3545;
+            filter: drop-shadow(0 0 6px #dc3545);
+        }
+
+        .avatar-admin-home {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #0d6efd;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+
+        .avatar-admin-modal {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #0d6efd;
+        }
+
+        @media print {
+            body { background: white; padding-top: 0; }
+            .no-print { display: none !important; }
+            footer { display: none !important; }
+            .modal-dialog { max-width: 100% !important; margin: 0 !important; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Navbar Principal -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+    <!-- Navbar Fija -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm no-print">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">
-                <i class="fas fa-network-wired me-2"></i> Sistema MACs (Principal)
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <i class="fas fa-id-card me-2 status-credential-icon disconnected" id="statusCredentialIcon" title="Estado de Conexión"></i>
+                <span>Directorios MACs</span>
             </a>
-            <div class="d-flex gap-2">
-                <!-- Enlace directo hacia tu editor de sedes -->
-                <a href="editor_sedes.html" class="btn btn-light btn-sm fw-bold text-primary">
-                    <i class="fas fa-edit me-1"></i> Ir al Editor de Sedes
-                </a>
+            <div class="d-flex align-items-center">
+                <span class="navbar-text text-light small me-2 fw-bold">v29.0</span>
             </div>
         </div>
     </nav>
 
-    <!-- Contenido Principal -->
-    <div class="container my-4">
-        <div class="row mb-4">
-            <div class="col-md-12">
-                <div class="card card-dashboard p-4 bg-white">
-                    <h3 class="text-primary fw-bold"><i class="fas fa-calendar-alt me-2"></i>Panel de Control y Calendario</h3>
-                    <p class="text-muted">Las sedes mostradas a continuación se cargan automáticamente desde la base de datos en la nube (sincronizadas con el editor).</p>
-                    <div id="estadoConexion" class="badge bg-secondary w-25 p-2">Conectando a la nube...</div>
+    <div class="main-content">
+        <!-- PANTALLA 1: SELECTOR DE VISTA (HOME) -->
+        <div id="vistaSelector" class="container my-5 view-section active">
+            <div class="row justify-content-center">
+                <div class="col-md-8 text-center">
+                    <div class="card card-custom p-4 p-md-5 bg-white position-relative">
+                        <div class="mb-3">
+                            <img src="mayito admin.jpeg" alt="Mayito Admin" class="avatar-admin-home mb-3" onerror="this.style.display='none'">
+                            <h2 class="fw-bold text-dark mb-1"><i class="fas fa-cubes text-primary me-2"></i>Sistema Web para Directorio de Módulos</h2>
+                            <p class="text-muted mb-4">Seleccione el módulo o apartado al que desea ingresar:</p>
+                        </div>
+
+                        <!-- 2 BOTONES PRINCIPALES ARRIBA -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <div class="card card-custom card-action-btn p-4 h-100 border border-primary text-center bg-light" onclick="cambiarVista('calendario')">
+                                    <i class="fas fa-calendar-alt fa-3x text-primary mb-3"></i>
+                                    <h4 class="fw-bold text-dark">Calendario Operativo</h4>
+                                    <p class="small text-muted mb-0">Asignación de sedes para la campaña.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card card-custom card-action-btn p-4 h-100 border border-success text-center bg-light" onclick="cambiarVista('vaciado')">
+                                    <i class="fas fa-file-excel fa-3x text-success mb-3"></i>
+                                    <h4 class="fw-bold text-dark">Directorio de Módulos con Coordenadas</h4>
+                                    <p class="small text-muted mb-0">Generación de tabla de directorio de módulos del Distrito 03 Coahuila.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- BOTÓN DE ADMINISTRADOR ABAJO -->
+                        <div>
+                            <button class="btn btn-dark py-2 px-4 shadow-sm fw-bold" onclick="abrirModalPasswordAdmin()">
+                                <i class="fas fa-tools text-warning me-2"></i> Panel de Soporte Técnico / Administrador
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Sección de ejemplo para mostrar datos cargados -->
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card card-dashboard p-4 bg-white">
-                    <h5 class="fw-bold mb-3"><i class="fas fa-list me-2"></i>Sedes Disponibles en Tiempo Real</h5>
+        <!-- PANTALLA 2: CALENDARIO OPERATIVO -->
+        <div id="vistaCalendario" class="container my-4 view-section">
+            <div class="d-flex justify-content-between align-items-center mb-3 no-print flex-wrap gap-2">
+                <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="cambiarVista('selector')">
+                    <i class="fas fa-arrow-left me-1"></i> Regresar al Menú Principal
+                </button>
+                <button class="btn btn-info btn-sm fw-bold text-white shadow-sm" onclick="sincronizarYActualizarTodo()">
+                    <i class="fas fa-sync-alt me-1"></i> Actualizar Tablas y Vaciado
+                </button>
+            </div>
+            
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <div class="card card-custom p-3 h-100">
+                        <label for="selectModulo" class="form-label fw-bold text-primary"><i class="fas fa-building me-1"></i> Seleccionar Módulo</label>
+                        <select id="selectModulo" class="form-select mb-2">
+                            <option value="050351">050351 - Módulo Fijo (Monclova)</option>
+                            <option value="050353">050353 - Semifijo / Norte</option>
+                            <option value="050354">050354 - Móvil / Región Centro</option>
+                        </select>
+                        <div id="infoHorarioModulo" class="horario-info">
+                            <i class="fas fa-calendar-check text-muted me-1"></i> <strong id="labelPeriodoTxt">Periodo:</strong> <span id="rangoFechasVisual">No configurado</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card card-custom p-3 h-100 bg-primary text-white d-flex flex-column justify-content-center align-items-center text-center">
+                        <h6 class="text-uppercase tracking-wider mb-1"><i class="fas fa-clipboard-check me-1"></i> Total Días Trabajados</h6>
+                        <h2 class="display-5 fw-bold mb-0" id="totalDiasTrabajados">0</h2>
+                        <small class="mt-1 fw-bold" id="subtituloCampaniaHeader">Campaña vigente</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-custom mb-4">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-calendar-day me-2 text-primary"></i>Calendario Operativo y Sedes</h5>
+                    
+                    <div class="w-100 d-md-none mt-2">
+                        <select id="selectMesMovil" class="form-select form-select-sm border-primary fw-bold text-primary">
+                            <option value="8">Septiembre 2026</option>
+                            <option value="9">Octubre 2026</option>
+                            <option value="10">Noviembre 2026</option>
+                            <option value="11">Diciembre 2026</option>
+                            <option value="0">Enero 2027</option>
+                        </select>
+                    </div>
+                    <div class="btn-group no-print d-none d-md-flex flex-wrap" role="group" id="mesSelectorBtns">
+                        <button type="button" class="btn btn-outline-primary btn-sm active" data-mes="8">Septiembre</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm" data-mes="9">Octubre</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm" data-mes="10">Noviembre</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm" data-mes="11">Diciembre</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm" data-mes="0">Enero (2027)</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="calendar-grid mb-2">
+                        <div class="calendar-day-header text-danger">Dom</div>
+                        <div class="calendar-day-header">Lun</div>
+                        <div class="calendar-day-header">Mar</div>
+                        <div class="calendar-day-header">Mié</div>
+                        <div class="calendar-day-header">Jue</div>
+                        <div class="calendar-day-header">Vie</div>
+                        <div class="calendar-day-header">Sáb</div>
+                    </div>
+                    <div class="calendar-grid" id="calendarGrid"></div>
+                </div>
+            </div>
+
+            <div class="card card-custom">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-table me-2 text-success"></i>Resumen por Sede (Módulo Seleccionado)</h5>
+                </div>
+                <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-striped table-hover align-middle" id="tablaSedesIndex">
-                            <thead class="table-dark">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
                                 <tr>
-                                    <th>ID Sede</th>
-                                    <th>Municipio</th>
                                     <th>Módulo</th>
-                                    <th>Dirección</th>
-                                    <th>Horario</th>
+                                    <th>Identificador de Sede</th>
+                                    <th>Nombre Localidad / Referencia</th>
+                                    <th class="text-center">Total Días Asignados</th>
+                                    <th>Fechas Programadas</th>
                                 </tr>
                             </thead>
-                            <tbody id="tbodyIndexSedes">
-                                <tr><td colspan="5" class="text-center text-muted">Cargando datos de Firebase...</td></tr>
+                            <tbody id="tablaResumenSedes">
+                                <tr><td colspan="5" class="text-center text-muted py-3">Aún no hay días asignados.</td></tr>
                             </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANTALLA 3: VACIADO FINAL -->
+        <div id="vistaVaciado" class="container-fluid my-4 view-section px-4">
+            <div class="d-flex justify-content-between align-items-center mb-3 no-print flex-wrap gap-2">
+                <button class="btn btn-outline-secondary btn-sm fw-bold" onclick="cambiarVista('selector')">
+                    <i class="fas fa-arrow-left me-1"></i> Regresar al Menú Principal
+                </button>
+                <h3 class="fw-bold text-dark mb-0 fs-5 fs-md-3"><i class="fas fa-file-excel text-success me-2"></i>Directorio de Módulos con Coordenadas</h3>
+                <div class="d-flex gap-2 flex-wrap">
+                    <button class="btn btn-secondary btn-sm fw-bold" onclick="window.print()">
+                        <i class="fas fa-print me-1"></i> Imprimir Tabla
+                    </button>
+                    <button class="btn btn-info btn-sm fw-bold text-white" onclick="sincronizarYActualizarTodo()">
+                        <i class="fas fa-sync-alt me-1"></i> Actualizar
+                    </button>
+                    <button class="btn btn-success btn-sm fw-bold" onclick="exportarExcelOficialPlantillaConEstilos()">
+                        <i class="fas fa-file-excel me-1"></i> Descargar Excel Oficial (Con Formato)
+                    </button>
+                </div>
+            </div>
+
+            <div class="card card-custom">
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="max-height: 75vh;">
+                        <table class="table table-bordered table-striped mb-0" id="tablaVaciadoFinal">
+                            <thead>
+                                <tr id="theadVaciadoTr"></tr>
+                            </thead>
+                            <tbody id="tbodyVaciado"></tbody>
                         </table>
                     </div>
                 </div>
@@ -78,15 +386,251 @@
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- PIE DE PÁGINA (FOOTER) EN UNA SOLA LÍNEA -->
+    <footer class="no-print">
+        <div class="container">
+            <div class="footer-content">
+                <span>Sistema Web para Directorio de Módulos &copy; 2026 Todos los derechos reservados.</span>
+                <span>Diseñado y desarrollado por <strong class="text-light">Carrivers Design</strong></span>
+            </div>
+        </div>
+    </footer>
 
-    <!-- Firebase SDK y Lógica de Sincronización -->
+    <!-- MODAL DE INGRESO DE CONTRASEÑA DE ADMINISTRADOR -->
+    <div class="modal fade" id="modalPasswordAdmin" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h6 class="modal-title fw-bold"><i class="fas fa-lock text-warning me-2"></i>Acceso Restringido</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label for="inputPasswordAdmin" class="form-label small fw-bold">Ingrese la contraseña de Administrador:</label>
+                    <input type="password" id="inputPasswordAdmin" class="form-control form-control-sm" placeholder="••••••••" autocomplete="current-password">
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary btn-sm px-4 fw-bold" onclick="verificarPasswordAdmin()">Aceptar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CENTRO DE MANDO: PANEL DE SOPORTE TÉCNICO / ADMINISTRADOR -->
+    <div class="modal fade" id="modalPanelAdmin" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <img src="mayito admin.jpeg" alt="Mayito Admin" class="avatar-admin-modal" onerror="this.style.display='none'">
+                        <h5 class="modal-title fw-bold m-0"><i class="fas fa-tools text-warning me-2"></i>Panel de Soporte Técnico / Administrador</h5>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body bg-light">
+                    <div class="row g-4">
+                        <!-- CONTROL DE BLOQUEO / DESBLOQUEO DE EDICIÓN EN CALENDARIOS -->
+                        <div class="col-12">
+                            <div class="card card-custom p-3 border-warning bg-white">
+                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                    <div>
+                                        <h6 class="fw-bold text-dark mb-1"><i class="fas fa-lock-open text-warning me-2"></i>Control de Permisos de Edición en Calendarios</h6>
+                                        <p class="small text-muted mb-0">Permite activar o bloquear la modificación de sedes por día en los calendarios operativos para los usuarios.</p>
+                                    </div>
+                                    <div class="form-check form-switch fs-5">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="switchBloqueoEdicion" style="cursor: pointer;">
+                                        <label class="form-check-label fw-bold fs-6 text-primary" for="switchBloqueoEdicion" id="labelEstadoBloqueo">Bloqueado</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12">
+                            <div class="card card-custom p-3 h-100 border border-primary">
+                                <h6 class="fw-bold text-primary mb-3"><i class="fas fa-calendar-alt me-2"></i>Periodo Oficial de Campaña y Nombre</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-bold text-muted">Fecha Inicio</label>
+                                        <input type="date" id="fechaInicio" class="form-control form-control-sm">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-bold text-muted">Fecha Fin</label>
+                                        <input type="date" id="fechaFin" class="form-control form-control-sm">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-bold text-muted">Nombre de la Campaña</label>
+                                        <input type="text" id="inputNombreCampania" class="form-control form-control-sm border-primary" placeholder="Ej. Campaña CAI 2026-2027">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12">
+                            <div class="card card-custom p-3 h-100 border border-success">
+                                <h6 class="fw-bold text-success mb-2"><i class="fas fa-calendar-day me-2"></i>Gestión de Días Festivos y Extra</h6>
+                                <div class="input-group input-group-sm mb-2">
+                                    <input type="date" id="inputFechaUnica" class="form-control">
+                                    <button class="btn btn-danger" type="button" id="btnHacerInhabil" title="Marcar como Inhábil"><i class="fas fa-ban me-1"></i> Inhábil</button>
+                                    <button class="btn btn-primary" type="button" id="btnHacerExtraHabil" title="Marcar como Hábil Extra"><i class="fas fa-calendar-plus me-1"></i> Extra</button>
+                                </div>
+                                <div style="max-height: 80px; overflow-y: auto;" id="listaFestivos" class="border rounded p-1 bg-white small">
+                                    <span class="text-muted fst-italic">Sin días registrados.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="card card-custom p-3 border-secondary">
+                                <h6 class="fw-bold text-dark mb-3"><i class="fas fa-cogs me-2"></i>Herramientas de Administración, Resguardos y Catálogos</h6>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button class="btn btn-outline-primary btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalGestorSedes">
+                                        <i class="fas fa-database me-1"></i> Abrir Editor Maestro de Sedes
+                                    </button>
+                                    <button class="btn btn-outline-dark btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalListadoSedes">
+                                        <i class="fas fa-list-ul me-1"></i> Listado de Sedes y Totales
+                                    </button>
+                                    <button class="btn btn-success btn-sm fw-bold" onclick="exportarResguardoCalendariosSinFijo()">
+                                        <i class="fas fa-file-download me-1"></i> Respaldar Calendarios (Sin 050351)
+                                    </button>
+                                    <button class="btn btn-danger btn-sm fw-bold ms-auto" onclick="solicitarPasswordReinicioTotal()">
+                                        <i class="fas fa-power-off me-1"></i> Reiniciar Sistema Total (Ceros)
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar Panel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE ALERTA DE RESGUARDO DE CAMPAÑA -->
+    <div class="modal fade" id="modalAlertaResguardo" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-success">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-check-circle me-2"></i>¡Campaña Completada al 100%!</h5>
+                </div>
+                <div class="modal-body text-center p-4">
+                    <p class="fs-6 mb-3">Has capturado el total de días de la campaña. ¿Procedemos a hacer el respaldo de la información?</p>
+                    <p class="small text-muted mb-0">Nota: Recuerda que debes guardar el respaldo al terminar de capturar todos los días satisfactoriamente.</p>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-success px-4 fw-bold" onclick="ejecutarResguardoExitoso()">Sí, Respaldar</button>
+                    <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal" onclick="alert('Debes guardar el respaldo al terminar de capturar todos los días satisfactoriamente.')">Seguir configurando</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modales Secundarios -->
+    <div class="modal fade" id="modalAsignarSede" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="modalFechaTitulo">Asignar Sede</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="modalFechaInput">
+                    <div class="mb-3">
+                        <label for="selectSedeModal" class="form-label fw-bold">Seleccione Identificador de Sede:</label>
+                        <select id="selectSedeModal" class="form-select"></select>
+                        <div class="form-text small text-muted mt-1" id="infoSedeSeleccionadaModal"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="btnGuardarAsignacion">Guardar Asignación</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL LISTADO DE SEDES Y TOTALES -->
+    <div class="modal fade" id="modalListadoSedes" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white no-print">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-list-ul me-2"></i>Listado de Sedes con Fechas y Totales</h5>
+                    <div>
+                        <button class="btn btn-light btn-sm fw-bold me-2" onclick="window.print()"><i class="fas fa-print me-1"></i> Imprimir</button>
+                        <button class="btn btn-success btn-sm fw-bold me-2" onclick="exportarListadoSedesTxt()"><i class="fas fa-download me-1"></i> Descargar</button>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                </div>
+                <div class="modal-body" id="modalListadoSedesBody">
+                    <div class="text-center text-muted py-3">Cargando listado...</div>
+                </div>
+                <div class="modal-footer no-print">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL GESTOR DE SEDES -->
+    <div class="modal fade" id="modalGestorSedes" tabindex="-1">
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <div class="d-flex align-items-center gap-3">
+                        <button class="btn btn-outline-light btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalPanelAdmin">
+                            <i class="fas fa-arrow-left me-1"></i> Regresar al Menú de Administrador
+                        </button>
+                        <h5 class="modal-title fw-bold m-0"><i class="fas fa-database me-2"></i>Gestor Maestro de Sedes</h5>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body bg-light">
+                    <div class="toolbar-gestor shadow-sm">
+                        <button class="btn btn-success btn-sm fw-bold" onclick="abrirEdicionSede(-1)"><i class="fas fa-plus-circle me-1"></i> Nuevo</button>
+                        <button class="btn btn-primary btn-sm fw-bold" onclick="exportarCSV()"><i class="fas fa-download me-1"></i> Respaldo (.csv)</button>
+                        <div class="d-flex align-items-center border-start border-end px-3">
+                            <input class="form-control form-control-sm me-2" type="file" id="inputCsvUpload" accept=".csv" style="max-width: 250px;">
+                            <button class="btn btn-secondary btn-sm fw-bold" onclick="importarCSV()"><i class="fas fa-upload me-1"></i> Subir Excel</button>
+                        </div>
+                        <button class="btn btn-info btn-sm fw-bold text-white ms-auto" onclick="sincronizarYActualizarTodo(true)"><i class="fas fa-sync-alt me-1"></i> Actualizar Sistema</button>
+                        <button class="btn btn-danger btn-sm fw-bold" onclick="solicitarPasswordReinicioTotal()"><i class="fas fa-power-off me-1"></i> Reiniciar Sistema Total</button>
+                    </div>
+                    <div class="table-gestor-wrapper bg-white shadow-sm border rounded">
+                        <table class="table table-hover table-bordered mb-0" id="tablaSedes">
+                            <thead><tr id="theadSedesTr"></tr></thead>
+                            <tbody id="tbodySedes"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalEditarRegistroSede" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold" id="modalEditarRegistroTitulo">Formulario de Sede</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editIndexSede">
+                    <div class="row g-2" id="formCamposSede"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="guardarEdicionSede()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
-        // Configuración oficial de tu proyecto Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyA6jvnsXZwF2anOJo3VadfNvn7Fl6Z5efY",
             authDomain: "sistema-mac-reportes.firebaseapp.com",
@@ -96,70 +640,1044 @@
             messagingSenderId: "776250701305",
             appId: "1:776250701305:web:ac542564b7f7a136cef928"
         };
-
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
 
-        // Variable global para usar el catálogo en tu calendario, selects o tablas
-        window.catalogoSedesGlobal = [];
-
-        // Indicador de conexión
         const connectedRef = ref(database, ".info/connected");
         onValue(connectedRef, (snap) => {
-            const badge = document.getElementById('estadoConexion');
+            const icon = document.getElementById('statusCredentialIcon');
             if (snap.val() === true) {
-                badge.className = "badge bg-success p-2";
-                badge.innerHTML = '<i class="fas fa-check-circle me-1"></i> Conectado a Firebase (En línea)';
+                icon.classList.remove('disconnected');
+                icon.classList.add('connected');
+                icon.title = "Conectado a Firebase (En línea)";
             } else {
-                badge.className = "badge bg-danger p-2";
-                badge.innerHTML = '<i class="fas fa-times-circle me-1"></i> Desconectado de Firebase';
+                icon.classList.remove('connected');
+                icon.classList.add('disconnected');
+                icon.title = "Desconectado de Firebase (Fuera de línea)";
             }
         });
 
-        // Escuchar en tiempo real el nodo 'catalogoSedes' que alimenta el editor
-        onValue(ref(database, 'catalogoSedes'), (snapshot) => {
-            const data = snapshot.val();
-            window.catalogoSedesGlobal = data ? data : [];
-            
-            console.log("Catálogo actualizado desde la nube:", window.catalogoSedesGlobal);
-            
-            // Función para pintar los datos de ejemplo en tu index
-            renderizarTablaIndex(window.catalogoSedesGlobal);
-            
-            // SI TIENES OTRAS FUNCIONES EN TU INDEX (como pintar calendarios o poblar selects), 
-            // puedes llamarlas aquí mismo, por ejemplo:
-            // actualizarCalendario();
+        const columnasSedes = [
+            "identificador sede", "CVE ENT", "CVE DTO", "CVE MPO", "NOMBRE MUNICIPIO", "CVE DE MODULO", 
+            "TIPO DE MODULO", "SECCION SEDE", "TIPO SECCION", "CVE LOCALIDAD", "NOMBRE LOCALIDAD", 
+            "DIRECCION", "MZ", "CODIGO POSTAL", "REFERENCIAS","HORARIO ", "Configuracion tm", "Configuracion tv", 
+            "Coordenadas X", "Coordenadas y"
+        ];
+        
+        let catalogoSedes = [];
+        let dbRegistros = {};
+        let diasFestivos = [];
+        let diasHabilesExtra = [];
+        let mesActivo = 8; 
+        let alertaResguardoMostrada = false;
+        let edicionCalendarioPermitida = false;
+        let nombreCampaniaGlobal = "";
+
+        const columnasVaciado = [
+            "CVE ENT", "CVE DTO", "CVE MPO", "NOMBRE MPIO", "CVE DE MODULO", 
+            "TIPO DE MODULO", "SECCION SEDE", "TIPO SECCION", "CVE LOCALIDAD", "NOMBRE LOCALIDAD", 
+            "DIRECCION", "MZ", "CODIGO POSTAL", "REFERENCIAS", "DÍA INICIAL", "DÍA FINAL", "HORARIO", 
+            "Configuracion tm", "Configuracion tv", "Coordenadas X", "Coordenadas y"
+        ];
+
+        const horariosTexto = {
+            "050351": "Lunes a Sábado (08:00 AM - 03:00 PM)",
+            "050353": "Lunes a Viernes (09:00 AM - 04:00 PM)",
+            "050354": "Lunes a Viernes (09:00 AM - 04:00 PM)"
+        };
+
+        window.abrirModalPasswordAdmin = function() {
+            document.getElementById('inputPasswordAdmin').value = '';
+            new bootstrap.Modal(document.getElementById('modalPasswordAdmin')).show();
+        };
+
+        window.verificarPasswordAdmin = function() {
+            const passInput = document.getElementById('inputPasswordAdmin');
+            const pass = passInput.value;
+            if (pass === "charro") {
+                bootstrap.Modal.getInstance(document.getElementById('modalPasswordAdmin')).hide();
+                new bootstrap.Modal(document.getElementById('modalPanelAdmin')).show();
+            } else {
+                alert("Contraseña incorrecta.");
+                passInput.value = '';
+                passInput.focus();
+            }
+        };
+
+        document.getElementById('inputPasswordAdmin').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                verificarPasswordAdmin();
+            }
         });
 
-        function renderizarTablaIndex(sedes) {
-            const tbody = document.getElementById('tbodyIndexSedes');
-            tbody.innerHTML = '';
+        window.solicitarPasswordReinicioTotal = function() {
+            let pass = prompt("⚠️ Acción protegida. Ingrese la contraseña de Administrador para confirmar el Reinicio Total:");
+            if (pass === "charro") {
+                reiniciarSistemaCompleto();
+            } else if (pass !== null) {
+                alert("Contraseña incorrecta. Operación cancelada.");
+            }
+        };
 
-            if (!sedes || sedes.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No hay sedes registradas en la nube.</td></tr>`;
+        window.cambiarVista = function(vista) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            if (vista === 'selector') document.getElementById('vistaSelector').classList.add('active');
+            else if (vista === 'calendario') {
+                document.getElementById('vistaCalendario').classList.add('active');
+                verificarYPrellenarFijo();
+                renderCalendar();
+                actualizarResumen();
+            } else if (vista === 'vaciado') {
+                document.getElementById('vistaVaciado').classList.add('active');
+                verificarYPrellenarFijo();
+                renderVaciadoFinal();
+            }
+        };
+
+        function formatearFechaDDMMYYYY(fStr) {
+            if (!fStr) return "";
+            const partes = fStr.split("-");
+            if (partes.length === 3) return `${partes[2]}-${partes[1]}-${partes[0]}`;
+            return fStr;
+        }
+
+        window.sincronizarYActualizarTodo = function(desdeEditor = false) {
+            verificarYPrellenarFijo();
+            renderCalendar();
+            actualizarResumen();
+            renderVaciadoFinal();
+            if (desdeEditor) {
+                bootstrap.Modal.getInstance(document.getElementById('modalGestorSedes'))?.hide();
+                bootstrap.Modal.getInstance(document.getElementById('modalPanelAdmin'))?.hide();
+            }
+            alert("¡Sistema actualizado correctamente con las sedes y datos vigentes!");
+        };
+
+        window.reiniciarSistemaCompleto = async function() {
+            if (confirm("⚠️ ¿Estás completamente seguro? Se borrarán todas las asignaciones, fechas, días festivos y el catálogo, dejando el sistema en ceros.")) {
+                try {
+                    await set(ref(database, 'catalogoSedes'), null);
+                    await set(ref(database, 'directorioMACs'), null);
+                    await set(ref(database, 'configuracionCampania'), null);
+                    await set(ref(database, 'diasFestivosCustom'), null);
+                    await set(ref(database, 'diasExtraCustom'), null);
+                    await set(ref(database, 'permisoEdicionCalendario'), null);
+                    alert("¡Sistema reiniciado y dejado completamente en blanco! La página se recargará.");
+                    location.reload();
+                } catch (e) {
+                    console.error("Error al reiniciar Firebase:", e);
+                    alert("Hubo un error al limpiar la base de datos.");
+                }
+            }
+        };
+
+        function esDiaHabil(fechaStr, modCVE) {
+            const dt = new Date(fechaStr + "T00:00:00");
+            const dow = dt.getDay(); 
+            const isFest = diasFestivos.includes(fechaStr);
+            const isExtra = diasHabilesExtra.includes(fechaStr);
+
+            if (isFest && !isExtra) return false;
+            if (isExtra) return true;
+
+            if (modCVE === "050351") {
+                return dow !== 0; 
+            } else {
+                return dow !== 0 && dow !== 6; 
+            }
+        }
+
+        function verificarYPrellenarFijo() {
+            const fIniStr = document.getElementById('fechaInicio').value;
+            const fFinStr = document.getElementById('fechaFin').value;
+            if (!fIniStr || !fFinStr) return;
+
+            const sedesFijo = obtenerSedesPorModulo("050351");
+            if (sedesFijo.length === 0) return;
+            const sedeFijaDefault = sedesFijo[0][0];
+
+            let curr = new Date(fIniStr + "T00:00:00");
+            const fin = new Date(fFinStr + "T00:00:00");
+
+            while (curr <= fin) {
+                const fStr = curr.toISOString().split('T')[0];
+                const dbKey = `050351_${fStr.replace(/-/g, '_')}`;
+
+                if (esDiaHabil(fStr, "050351")) {
+                    if (!dbRegistros[dbKey] || !dbRegistros[dbKey].identificadorSede) {
+                        dbRegistros[dbKey] = { modulo: "050351", fecha: fStr, identificadorSede: sedeFijaDefault };
+                    }
+                }
+                curr.setDate(curr.getDate() + 1);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderHeaderGestor();
+            actualizarRangoVisualCampania();
+            setupMesButtons();
+            
+            const switchBloqueo = document.getElementById('switchBloqueoEdicion');
+            switchBloqueo.addEventListener('change', async (e) => {
+                edicionCalendarioPermitida = e.target.checked;
+                actualizarLabelBloqueoVisual();
+                try {
+                    await set(ref(database, 'permisoEdicionCalendario'), edicionCalendarioPermitida);
+                } catch(err) {
+                    console.error("Error al actualizar permiso en Firebase:", err);
+                }
+            });
+
+            onValue(ref(database, 'permisoEdicionCalendario'), (snap) => {
+                const val = snap.val();
+                edicionCalendarioPermitida = val === true;
+                switchBloqueo.checked = edicionCalendarioPermitida;
+                actualizarLabelBloqueoVisual();
+            });
+
+            onValue(ref(database, 'configuracionCampania'), async (snap) => {
+                const cfg = snap.val();
+                const fIniInput = document.getElementById('fechaInicio');
+                const fFinInput = document.getElementById('fechaFin');
+                const inputNombreCampania = document.getElementById('inputNombreCampania');
+                if (cfg) {
+                    fIniInput.value = cfg.inicio || "";
+                    fFinInput.value = cfg.fin || "";
+                    inputNombreCampania.value = cfg.nombreCampania || "";
+                    nombreCampaniaGlobal = cfg.nombreCampania || "";
+                }
+                actualizarRangoVisualCampania();
+                verificarYPrellenarFijo();
+                renderCalendar();
+                actualizarResumen();
+            });
+
+            onValue(ref(database, 'diasFestivosCustom'), (snap) => {
+                diasFestivos = snap.val() || [];
+                renderFestivos();
+                renderCalendar();
+            });
+
+            onValue(ref(database, 'diasExtraCustom'), (snap) => {
+                diasHabilesExtra = snap.val() || [];
+                renderFestivos();
+                renderCalendar();
+            });
+
+            onValue(ref(database, 'directorioMACs'), (snapshot) => {
+                dbRegistros = snapshot.val() || {};
+                verificarYPrellenarFijo();
+                renderCalendar();
+                actualizarResumen();
+                verificarCampaniaCompleta();
+            });
+
+            onValue(ref(database, 'catalogoSedes'), (snapshot) => {
+                const data = snapshot.val();
+                catalogoSedes = data ? data : [];
+                renderEditorSedes();
+                verificarYPrellenarFijo();
+                renderCalendar();
+                actualizarResumen();
+            });
+
+            document.getElementById('selectModulo').addEventListener('change', () => {
+                renderCalendar();
+                actualizarResumen();
+            });
+
+            const guardarConfiguracionCampania = async () => {
+                const inicio = document.getElementById('fechaInicio').value;
+                const fin = document.getElementById('fechaFin').value;
+                const nombreCampania = document.getElementById('inputNombreCampania').value;
+                nombreCampaniaGlobal = nombreCampania;
+                await set(ref(database, 'configuracionCampania'), { inicio, fin, nombreCampania });
+                actualizarRangoVisualCampania();
+                verificarYPrellenarFijo();
+                renderCalendar();
+                actualizarResumen();
+            };
+
+            document.getElementById('fechaInicio').addEventListener('change', guardarConfiguracionCampania);
+            document.getElementById('fechaFin').addEventListener('change', guardarConfiguracionCampania);
+            document.getElementById('inputNombreCampania').addEventListener('input', guardarConfiguracionCampania);
+
+            document.getElementById('btnHacerInhabil').addEventListener('click', async () => {
+                const val = document.getElementById('inputFechaUnica').value;
+                if (!val) { alert("Seleccione una fecha."); return; }
+                if (diasHabilesExtra.includes(val)) diasHabilesExtra = diasHabilesExtra.filter(d => d !== val);
+                if (!diasFestivos.includes(val)) {
+                    diasFestivos.push(val);
+                    diasFestivos.sort();
+                }
+                await set(ref(database, 'diasFestivosCustom'), diasFestivos);
+                await set(ref(database, 'diasExtraCustom'), diasHabilesExtra);
+                renderFestivos();
+                verificarYPrellenarFijo();
+                renderCalendar();
+                actualizarResumen();
+                document.getElementById('inputFechaUnica').value = '';
+            });
+
+            document.getElementById('btnHacerExtraHabil').addEventListener('click', async () => {
+                const val = document.getElementById('inputFechaUnica').value;
+                if (!val) { alert("Seleccione una fecha."); return; }
+                if (diasFestivos.includes(val)) diasFestivos = diasFestivos.filter(d => d !== val);
+                if (!diasHabilesExtra.includes(val)) {
+                    diasHabilesExtra.push(val);
+                    diasHabilesExtra.sort();
+                }
+                await set(ref(database, 'diasFestivosCustom'), diasFestivos);
+                await set(ref(database, 'diasExtraCustom'), diasHabilesExtra);
+                renderFestivos();
+                verificarYPrellenarFijo();
+                renderCalendar();
+                actualizarResumen();
+                document.getElementById('inputFechaUnica').value = '';
+            });
+
+            document.getElementById('btnGuardarAsignacion').addEventListener('click', async () => {
+                const fecha = document.getElementById('modalFechaInput').value;
+                const identificadorSede = document.getElementById('selectSedeModal').value;
+                const modulo = document.getElementById('selectModulo').value;
+                const dbKey = `${modulo}_${fecha.replace(/-/g, '_')}`;
+
+                const nuevoRegistro = { modulo, fecha, identificadorSede };
+                dbRegistros[dbKey] = nuevoRegistro;
+                try {
+                    await set(ref(database, 'directorioMACs/' + dbKey), nuevoRegistro);
+                } catch (e) {
+                    console.error("Error al guardar en Firebase:", e);
+                }
+                bootstrap.Modal.getInstance(document.getElementById('modalAsignarSede')).hide();
+                renderCalendar();
+                actualizarResumen();
+                verificarCampaniaCompleta();
+            });
+
+            document.getElementById('selectSedeModal').addEventListener('change', (e) => {
+                const idSede = e.target.value;
+                const sedeData = catalogoSedes.find(s => s[0] === idSede);
+                const infoDiv = document.getElementById('infoSedeSeleccionadaModal');
+                if (sedeData) infoDiv.innerHTML = `<i class="fas fa-map-marker-alt text-danger me-1"></i> <strong>Localidad:</strong> ${sedeData[10]} | <strong>Dirección:</strong> ${sedeData[11]}`;
+                else infoDiv.innerHTML = '';
+            });
+
+            document.getElementById('modalListadoSedes').addEventListener('show.bs.modal', actualizarModalListadoSedes);
+            renderFestivos();
+        });
+
+        function actualizarLabelBloqueoVisual() {
+            const lbl = document.getElementById('labelEstadoBloqueo');
+            if (edicionCalendarioPermitida) {
+                lbl.innerText = "Desbloqueado (Edición Permitida)";
+                lbl.className = "form-check-label fw-bold fs-6 text-success";
+            } else {
+                lbl.innerText = "Bloqueado (Solo Lectura)";
+                lbl.className = "form-check-label fw-bold fs-6 text-danger";
+            }
+        }
+
+        window.exportarResguardoCalendariosSinFijo = function() {
+            let contenido = "RESPALDO DE CALENDARIOS OPERATIVOS (EXCEPTO 050351)\n====================================================\n\n";
+            let contador = 0;
+
+            Object.values(dbRegistros).forEach(reg => {
+                if (reg && reg.modulo && reg.modulo !== "050351" && reg.identificadorSede) {
+                    const sData = catalogoSedes.find(s => s[0] === reg.identificadorSede);
+                    const localidad = sData ? sData[10] : "Localidad desconocida";
+                    contenido += `MÓDULO: ${reg.modulo} | FECHA: ${formatearFechaDDMMYYYY(reg.fecha)} | ID SEDE: ${reg.identificadorSede} | LOCALIDAD: ${localidad}\n`;
+                    contador++;
+                }
+            });
+
+            if (contador === 0) {
+                alert("No hay registros de calendarios en módulos diferentes a 050351 para respaldar.");
                 return;
             }
 
-            sedes.forEach((fila) => {
-                // Basado en el orden de tus columnas del editor:
-                // 0: identificador sede, 4: NOMBRE MUNICIPIO, 5: CVE DE MODULO, 11: DIRECCION, 16: HORARIO
-                const idSede = fila[0] || '';
-                const municipio = fila[4] || '';
-                const modulo = fila[5] || '';
-                const direccion = fila[11] || '';
-                const horario = fila[16] || '';
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(new Blob([contenido], { type: 'text/plain;charset=utf-8;' }));
+            link.download = "respaldo_calendarios_sin_fijo.txt";
+            link.click();
+        };
 
-                tbody.innerHTML += `
-                    <tr>
-                        <td><strong>${idSede}</strong></td>
-                        <td>${municipio}</td>
-                        <td>${modulo}</td>
-                        <td>${direccion}</td>
-                        <td>${horario}</td>
-                    </tr>
-                `;
+        function actualizarRangoVisualCampania() {
+            const ini = document.getElementById('fechaInicio').value;
+            const fin = document.getElementById('fechaFin').value;
+            const spanVisual = document.getElementById('rangoFechasVisual');
+            const subH = document.getElementById('subtituloCampaniaHeader');
+
+            if (ini && fin) {
+                spanVisual.innerText = `${formatearFechaDDMMYYYY(ini)} al ${formatearFechaDDMMYYYY(fin)}`;
+            } else {
+                spanVisual.innerText = "No configurado";
+            }
+
+            subH.innerText = nombreCampaniaGlobal ? nombreCampaniaGlobal : "Campaña vigente";
+        }
+
+        function verificarCampaniaCompleta() {
+            const fIniStr = document.getElementById('fechaInicio').value;
+            const fFinStr = document.getElementById('fechaFin').value;
+            if (!fIniStr || !fFinStr || alertaResguardoMostrada) return;
+
+            const inicioCamp = new Date(fIniStr + "T00:00:00");
+            const finCamp = new Date(fFinStr + "T00:00:00");
+            const modulos = ["050351", "050353", "050354"];
+            
+            let totalHabilesEsperados = 0;
+            let totalCapturados = 0;
+
+            modulos.forEach(modCVE => {
+                let curr = new Date(inicioCamp);
+                while(curr <= finCamp) {
+                    const fStr = curr.toISOString().split('T')[0];
+                    if (esDiaHabil(fStr, modCVE)) {
+                        totalHabilesEsperados++;
+                        const dbKey = `${modCVE}_${fStr.replace(/-/g, '_')}`;
+                        if (dbRegistros[dbKey]?.identificadorSede) {
+                            totalCapturados++;
+                        }
+                    }
+                    curr.setDate(curr.getDate() + 1);
+                }
+            });
+
+            if (totalHabilesEsperados > 0 && totalCapturados >= totalHabilesEsperados) {
+                alertaResguardoMostrada = true;
+                new bootstrap.Modal(document.getElementById('modalAlertaResguardo')).show();
+            }
+        }
+
+        window.ejecutarResguardoExitoso = function() {
+            bootstrap.Modal.getInstance(document.getElementById('modalAlertaResguardo')).hide();
+            exportarListadoSedesTxt();
+            alert("¡Respaldo generado y descargado correctamente con éxito!");
+        };
+
+        window.eliminarFestivo = async function(fecha) {
+            diasFestivos = diasFestivos.filter(d => d !== fecha);
+            await set(ref(database, 'diasFestivosCustom'), diasFestivos);
+            renderFestivos();
+            renderCalendar();
+            actualizarResumen();
+        };
+
+        window.eliminarExtraHabil = async function(fecha) {
+            diasHabilesExtra = diasHabilesExtra.filter(d => d !== fecha);
+            await set(ref(database, 'diasExtraCustom'), diasHabilesExtra);
+            renderFestivos();
+            renderCalendar();
+            actualizarResumen();
+        };
+
+        function renderFestivos() {
+            const container = document.getElementById('listaFestivos');
+            let html = '';
+            if (diasFestivos.length === 0 && diasHabilesExtra.length === 0) {
+                container.innerHTML = '<span class="text-muted fst-italic">Sin días registrados.</span>';
+                return;
+            }
+            diasFestivos.forEach(d => {
+                html += `<span class="badge bg-danger badge-item-delete">Festivo: ${formatearFechaDDMMYYYY(d)} <button type="button" class="btn-close btn-close-white" onclick="eliminarFestivo('${d}')"></button></span>`;
+            });
+            diasHabilesExtra.forEach(d => {
+                html += `<span class="badge bg-primary badge-item-delete">Hábil Extra: ${formatearFechaDDMMYYYY(d)} <button type="button" class="btn-close btn-close-white" onclick="eliminarExtraHabil('${d}')"></button></span>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderHeaderGestor() {
+            document.getElementById('theadSedesTr').innerHTML = `<th>Acciones</th>` + columnasSedes.map(col => `<th>${col}</th>`).join('');
+        }
+
+        function renderEditorSedes() {
+            const tbody = document.getElementById('tbodySedes');
+            tbody.innerHTML = '';
+            if (catalogoSedes.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="${columnasSedes.length + 1}" class="text-center text-muted py-3">No hay sedes registradas en el catálogo. Suba un archivo CSV o cree un nuevo registro.</td></tr>`;
+                return;
+            }
+            catalogoSedes.forEach((fila, index) => {
+                let htmlFila = `<tr><td class="text-center">
+                    <button class="btn btn-sm btn-outline-primary me-1 mb-1" onclick="abrirEdicionSede(${index})"><i class="fas fa-pencil-alt"></i></button>
+                    <button class="btn btn-sm btn-outline-danger mb-1" onclick="eliminarFilaSede(${index})"><i class="fas fa-trash-alt"></i></button>
+                </td>`;
+                for(let c = 0; c < columnasSedes.length; c++) htmlFila += `<td>${fila[c] !== undefined ? fila[c] : ""}</td>`;
+                tbody.innerHTML += htmlFila + `</tr>`;
             });
         }
+
+        window.abrirEdicionSede = function(index) {
+            document.getElementById('editIndexSede').value = index;
+            const camposContainer = document.getElementById('formCamposSede');
+            camposContainer.innerHTML = '';
+            let datos = index === -1 ? new Array(columnasSedes.length).fill("") : catalogoSedes[index];
+            document.getElementById('modalEditarRegistroTitulo').innerText = index === -1 ? "Nuevo Registro de Sede" : "Editar Registro de Sede";
+            
+            columnasSedes.forEach((columna, colIndex) => {
+                camposContainer.innerHTML += `<div class="col-md-3 mb-2">
+                    <label class="form-label fw-bold text-muted small mb-0">${columna}</label>
+                    <input type="text" class="form-control form-control-sm border-primary" id="inputColSede_${colIndex}" value="${datos[colIndex]}">
+                </div>`;
+            });
+            new bootstrap.Modal(document.getElementById('modalEditarRegistroSede')).show();
+        };
+
+        window.guardarEdicionSede = async function() {
+            const index = parseInt(document.getElementById('editIndexSede').value);
+            let nuevaFila = [];
+            columnasSedes.forEach((_, colIndex) => nuevaFila.push(document.getElementById(`inputColSede_${colIndex}`).value));
+            if (index === -1) catalogoSedes.push(nuevaFila);
+            else catalogoSedes[index] = nuevaFila;
+            
+            try {
+                await set(ref(database, 'catalogoSedes'), catalogoSedes);
+            } catch (e) {
+                console.error("Error al guardar en Firebase:", e);
+            }
+
+            bootstrap.Modal.getInstance(document.getElementById('modalEditarRegistroSede')).hide();
+            renderEditorSedes();
+        };
+
+        window.eliminarFilaSede = async function(i) { 
+            if(confirm("¿Eliminar esta sede?")) { 
+                catalogoSedes.splice(i, 1); 
+                try {
+                    const payload = catalogoSedes.length > 0 ? catalogoSedes : null;
+                    await set(ref(database, 'catalogoSedes'), payload);
+                } catch (e) {
+                    console.error("Error al actualizar Firebase:", e);
+                }
+                renderEditorSedes(); 
+            } 
+        };
+
+        window.exportarCSV = function() {
+            let csvContent = "\uFEFF" + columnasSedes.join(",") + "\n";
+            catalogoSedes.forEach(row => { csvContent += row.map(v => `"${(v || "").replace(/"/g, '""')}"`).join(",") + "\n"; });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }));
+            link.download = "catalogo_sedes_respaldo.csv";
+            link.click();
+        };
+
+        function parseCSVLine(text) {
+            let result = [];
+            let cell = '';
+            let inQuotes = false;
+            for (let i = 0; i < text.length; i++) {
+                let char = text[i];
+                let nextChar = text[i + 1];
+                if (char === '"') {
+                    if (inQuotes && nextChar === '"') {
+                        cell += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    result.push(cell.trim());
+                    cell = '';
+                } else {
+                    cell += char;
+                }
+            }
+            result.push(cell.trim());
+            return result;
+        }
+
+        window.importarCSV = function() {
+            const fileInput = document.getElementById('inputCsvUpload');
+            const file = fileInput.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.readAsText(file, "UTF-8");
+            reader.onload = async function(e) {
+                const text = e.target.result;
+                const lines = text.split(/\r\n|\n/);
+                if (lines.length > 1) {
+                    let nuevoCatalogo = [];
+                    for (let i = 1; i < lines.length; i++) {
+                        let line = lines[i].trim();
+                        if (line !== "") {
+                            let vals = parseCSVLine(line);
+                            vals = vals.map(v => v.replace(/^"|"$/g, '').trim());
+                            while (vals.length < columnasSedes.length) vals.push("");
+                            nuevoCatalogo.push(vals.slice(0, columnasSedes.length));
+                        }
+                    }
+                    catalogoSedes = nuevoCatalogo;
+                    try {
+                        await set(ref(database, 'catalogoSedes'), catalogoSedes);
+                        renderEditorSedes();
+                        fileInput.value = ""; 
+                        alert("¡Catálogo importado y guardado en la nube con éxito!");
+                    } catch (err) {
+                        console.error("Error al guardar CSV en Firebase:", err);
+                        alert("Hubo un error al guardar en la nube.");
+                    }
+                }
+            };
+        };
+
+        function setupMesButtons() {
+            document.querySelectorAll('#mesSelectorBtns button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('#mesSelectorBtns button').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    mesActivo = parseInt(e.target.getAttribute('data-mes'));
+                    document.getElementById('selectMesMovil').value = mesActivo;
+                    renderCalendar();
+                });
+            });
+
+            document.getElementById('selectMesMovil').addEventListener('change', (e) => {
+                mesActivo = parseInt(e.target.value);
+                document.querySelectorAll('#mesSelectorBtns button').forEach(b => {
+                    if (parseInt(b.getAttribute('data-mes')) === mesActivo) b.classList.add('active');
+                    else b.classList.remove('active');
+                });
+                renderCalendar();
+            });
+        }
+
+        function obtenerSedesPorModulo(mod) { return catalogoSedes.filter(f => f[5] === mod); }
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+            const mes = mesActivo;
+            const anio = mes === 0 ? 2027 : 2026;
+            const primerDiaIndex = new Date(anio, mes, 1).getDay();
+            const totalDiasMes = new Date(anio, mes + 1, 0).getDate();
+            const moduloActual = document.getElementById('selectModulo').value;
+
+            const fIniStr = document.getElementById('fechaInicio').value;
+            const fFinStr = document.getElementById('fechaFin').value;
+            const dtInicioCamp = fIniStr ? new Date(fIniStr + "T00:00:00") : null;
+            const dtFinCamp = fFinStr ? new Date(fFinStr + "T00:00:00") : null;
+
+            for (let i = 0; i < primerDiaIndex; i++) grid.appendChild(Object.assign(document.createElement('div'), { className: 'calendar-cell disabled' }));
+
+            for (let dia = 1; dia <= totalDiasMes; dia++) {
+                const fechaStr = `${anio}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+                const dtActual = new Date(fechaStr + "T00:00:00");
+                const dbKey = `${moduloActual}_${fechaStr.replace(/-/g, '_')}`;
+
+                const cell = document.createElement('div');
+                cell.className = `calendar-cell theme-${moduloActual}`;
+
+                let fueraDeCampaña = false;
+                if (dtInicioCamp && dtFinCamp) {
+                    if (dtActual < dtInicioCamp || dtActual > dtFinCamp) {
+                        fueraDeCampaña = true;
+                    }
+                }
+
+                const isFestivo = diasFestivos.includes(fechaStr);
+                const isExtraHabil = diasHabilesExtra.includes(fechaStr);
+                const habil = esDiaHabil(fechaStr, moduloActual);
+
+                if (fueraDeCampaña) {
+                    cell.className = 'calendar-cell disabled';
+                } else if (isFestivo && !isExtraHabil) {
+                    cell.className = 'calendar-cell festive';
+                } else if (isExtraHabil) {
+                    cell.className = 'calendar-cell extra-habil';
+                } else if (!habil) {
+                    cell.className = 'calendar-cell disabled';
+                }
+
+                let html = `<div class="day-number">${dia}</div>`;
+                if (fueraDeCampaña) {
+                    html += `<span class="text-muted fst-italic" style="font-size:0.6rem;">Fuera de rango</span>`;
+                } else if (isFestivo && !isExtraHabil) {
+                    html += `<span class="badge bg-danger badge-sede mt-1">Festivo</span>`;
+                } else if (!habil) {
+                    html += `<span class="text-muted fst-italic" style="font-size:0.65rem;">Inhábil</span>`;
+                } else if (dbRegistros[dbKey]?.identificadorSede) {
+                    html += `<span class="badge badge-sede badge-sede-${moduloActual} mt-1 fw-bold">${dbRegistros[dbKey].identificadorSede}</span>`;
+                } else {
+                    html += `<span class="text-primary fw-bold fst-italic" style="font-size:0.7rem;"><i class="fas fa-plus-circle"></i> Asignar</span>`;
+                }
+                cell.innerHTML = html;
+
+                if (!fueraDeCampaña && habil) {
+                    cell.addEventListener('click', () => abrirModalSede(fechaStr));
+                }
+                grid.appendChild(cell);
+            }
+        }
+
+        window.abrirModalSede = function(fechaStr) {
+            if (!edicionCalendarioPermitida) {
+                alert("⚠️ La edición de calendarios se encuentra bloqueada. Solicite la activación al administrador para hacer cambios.");
+                return;
+            }
+
+            document.getElementById('modalFechaInput').value = fechaStr;
+            document.getElementById('modalFechaTitulo').innerText = `Asignar Sede - ${formatearFechaDDMMYYYY(fechaStr)}`;
+            const moduloActual = document.getElementById('selectModulo').value;
+            const selectSede = document.getElementById('selectSedeModal');
+            selectSede.innerHTML = '';
+            const dbKey = `${moduloActual}_${fechaStr.replace(/-/g, '_')}`;
+
+            const sedesDelModulo = obtenerSedesPorModulo(moduloActual);
+            if (sedesDelModulo.length === 0) {
+                selectSede.innerHTML = '<option value="">No hay sedes registradas para este módulo</option>';
+            } else {
+                sedesDelModulo.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s[0];
+                    opt.textContent = `[${s[0]}] — ${s[10]} (${s[11]})`;
+                    if (dbRegistros[dbKey]?.identificadorSede === s[0]) opt.selected = true;
+                    selectSede.appendChild(opt);
+                });
+            }
+            selectSede.dispatchEvent(new Event('change'));
+            new bootstrap.Modal(document.getElementById('modalAsignarSede')).show();
+        };
+
+        function actualizarResumen() {
+            const moduloActual = document.getElementById('selectModulo').value;
+            const tbody = document.getElementById('tablaResumenSedes');
+            tbody.innerHTML = '';
+            let conteo = {}, total = 0;
+
+            Object.values(dbRegistros).forEach(reg => {
+                if (reg && reg.modulo === moduloActual && reg.identificadorSede) {
+                    total++;
+                    const sData = catalogoSedes.find(s => s[0] === reg.identificadorSede);
+                    const loc = sData ? sData[10] : "Desconocida";
+                    if (!conteo[reg.identificadorSede]) conteo[reg.identificadorSede] = { modulo: reg.modulo, localidad: loc, fechas: [] };
+                    conteo[reg.identificadorSede].fechas.push(formatearFechaDDMMYYYY(reg.fecha));
+                }
+            });
+
+            document.getElementById('totalDiasTrabajados').innerText = total;
+            const keys = Object.keys(conteo);
+            if (keys.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-3">Sin días asignados.</td></tr>`;
+                return;
+            }
+
+            keys.forEach(id => {
+                const d = conteo[id];
+                tbody.innerHTML += `<tr>
+                    <td><span class="badge bg-secondary">${d.modulo}</span></td>
+                    <td class="fw-bold text-primary">${id}</td>
+                    <td>${d.localidad}</td>
+                    <td class="text-center"><span class="badge badge-sede-${moduloActual} rounded-pill px-3">${d.fechas.length} días</span></td>
+                    <td class="small text-muted">${d.fechas.join(', ')}</td>
+                </tr>`;
+            });
+        }
+
+        function actualizarModalListadoSedes() {
+            const container = document.getElementById('modalListadoSedesBody');
+            const modulosOrden = ["050351", "050353", "050354"];
+            
+            let sedesConteo = {};
+            Object.values(dbRegistros).forEach(reg => {
+                if (reg?.modulo && reg?.identificadorSede) {
+                    const key = `${reg.modulo}_${reg.identificadorSede}`;
+                    if (!sedesConteo[key]) {
+                        const sData = catalogoSedes.find(s => s[0] === reg.identificadorSede);
+                        sedesConteo[key] = {
+                            modulo: reg.modulo,
+                            idSede: reg.identificadorSede,
+                            localidad: sData ? sData[10] : reg.identificadorSede,
+                            visitas: 0
+                        };
+                    }
+                    sedesConteo[key].visitas++;
+                }
+            });
+
+            let html = '';
+            modulosOrden.forEach(modCVE => {
+                const sedesMod = Object.values(sedesConteo).filter(s => s.modulo === modCVE);
+                const nombreModLabel = modCVE === "050351" ? "Módulo Fijo 050351 (Monclova)" : (modCVE === "050353" ? "Módulo Semifijo 050353 (Norte)" : "Módulo Móvil 050354 (Región Centro)");
+                
+                let totalVisitasModulo = sedesMod.reduce((sum, item) => sum + item.visitas, 0);
+
+                html += `<div class="d-flex justify-content-between align-items-center mt-3 border-bottom pb-1">
+                    <h6 class="fw-bold text-primary m-0"><i class="fas fa-building me-1"></i> ${nombreModLabel}</h6>
+                    <span class="badge bg-dark fs-6 px-3 py-1">Visitas: ${totalVisitasModulo}</span>
+                </div>`;
+                
+                if (sedesMod.length === 0) {
+                    html += `<p class="text-muted small fst-italic ms-3 mt-2">Sin sedes con fechas asignadas en este módulo.</p>`;
+                } else {
+                    html += `<ul class="list-group list-group-flush mb-3 mt-2">`;
+                    sedesMod.forEach(item => {
+                        html += `<li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                            <span><strong>LOCALIDAD:</strong> ${item.localidad} <span class="text-muted small">(${item.idSede})</span></span>
+                            <span class="badge bg-primary rounded-pill px-3 py-2">VISITAS: ${item.visitas}</span>
+                        </li>`;
+                    });
+                    html += `</ul>`;
+                }
+            });
+
+            container.innerHTML = html;
+        }
+
+        window.exportarListadoSedesTxt = function() {
+            let contenido = "LISTADO DE SEDES Y TOTALES - DIRECTORIO MACS\n==========================================\n\n";
+            const modulosOrden = ["050351", "050353", "050354"];
+            
+            let sedesConteo = {};
+            Object.values(dbRegistros).forEach(reg => {
+                if (reg?.modulo && reg?.identificadorSede) {
+                    const key = `${reg.modulo}_${reg.identificadorSede}`;
+                    if (!sedesConteo[key]) {
+                        const sData = catalogoSedes.find(s => s[0] === reg.identificadorSede);
+                        sedesConteo[key] = { modulo: reg.modulo, localidad: sData ? sData[10] : reg.identificadorSede, visitas: 0 };
+                    }
+                    sedesConteo[key].visitas++;
+                }
+            });
+
+            modulosOrden.forEach(modCVE => {
+                contenido += `--- MÓDULO: ${modCVE} ---\n`;
+                const sedesMod = Object.values(sedesConteo).filter(s => s.modulo === modCVE);
+                if(sedesMod.length === 0) {
+                    contenido += "Sin sedes con fechas asignadas.\n";
+                } else {
+                    sedesMod.forEach(item => {
+                        contenido += `LOCALIDAD: ${item.localidad}    VISITAS: ${item.visitas}\n`;
+                    });
+                }
+                contenido += "\n";
+            });
+
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(new Blob([contenido], { type: 'text/plain;charset=utf-8;' }));
+            link.download = "listado_sedes_visitas.txt";
+            link.click();
+        };
+
+        function generarFilasDirectorio() {
+            verificarYPrellenarFijo();
+            const modulosOrden = ["050351", "050353", "050354"];
+            let filasGeneradas = [];
+
+            const fIniStr = document.getElementById('fechaInicio').value;
+            const fFinStr = document.getElementById('fechaFin').value;
+            if (!fIniStr || !fFinStr) return [];
+
+            const inicioCamp = new Date(fIniStr + "T00:00:00");
+            const finCamp = new Date(fFinStr + "T00:00:00");
+
+            modulosOrden.forEach(modCVE => {
+                let diasProg = [];
+                let curr = new Date(inicioCamp);
+                while(curr <= finCamp) {
+                    const fStr = curr.toISOString().split('T')[0];
+                    if (esDiaHabil(fStr, modCVE)) {
+                        const dbKey = `${modCVE}_${fStr.replace(/-/g, '_')}`;
+                        const sedeAsignada = dbRegistros[dbKey]?.identificadorSede;
+                        if (sedeAsignada) {
+                            diasProg.push({ fecha: fStr, sede: sedeAsignada });
+                        }
+                    }
+                    curr.setDate(curr.getDate() + 1);
+                }
+
+                if (diasProg.length > 0) {
+                    let bloqueActual = { sede: diasProg[0].sede, inicio: diasProg[0].fecha, fin: diasProg[0].fecha };
+                    for (let i = 1; i < diasProg.length; i++) {
+                        const prevDate = new Date(diasProg[i-1].fecha + "T00:00:00");
+                        const currDate = new Date(diasProg[i].fecha + "T00:00:00");
+                        
+                        let haySaltoFestivoOInhabilEnMedio = false;
+                        let checkDate = new Date(prevDate);
+                        checkDate.setDate(checkDate.getDate() + 1);
+                        while(checkDate < currDate) {
+                            const checkStr = checkDate.toISOString().split('T')[0];
+                            if (diasFestivos.includes(checkStr) && !diasHabilesExtra.includes(checkStr)) {
+                                haySaltoFestivoOInhabilEnMedio = true;
+                                break;
+                            }
+                            checkDate.setDate(checkDate.getDate() + 1);
+                        }
+
+                        let esFinDeSemanaSalto = false;
+                        if (modCVE !== "050351") {
+                            const diffTime = Math.abs(currDate - prevDate);
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                            if (diffDays > 3) esFinDeSemanaSalto = true;
+                        }
+
+                        if (diasProg[i].sede === bloqueActual.sede && !haySaltoFestivoOInhabilEnMedio && !esFinDeSemanaSalto) {
+                            bloqueActual.fin = diasProg[i].fecha;
+                        } else {
+                            filasGeneradas.push(bloqueActual);
+                            bloqueActual = { sede: diasProg[i].sede, inicio: diasProg[i].fecha, fin: diasProg[i].fecha };
+                        }
+                    }
+                    filasGeneradas.push(bloqueActual);
+                }
+            });
+
+            let datosFilas = [];
+            filasGeneradas.forEach(bloque => {
+                const sData = catalogoSedes.find(s => s[0] === bloque.sede) || [];
+                const diaInicialStr = formatearFechaDDMMYYYY(bloque.inicio);
+                const diaFinalStr = formatearFechaDDMMYYYY(bloque.fin);
+                
+                const rowVals = [
+                    sData[1] || "", 
+                    sData[2] || "", 
+                    sData[3] || "", 
+                    sData[4] || "", 
+                    sData[5] || "", 
+                    sData[6] || "", 
+                    sData[7] || "", 
+                    sData[8] || "", 
+                    sData[9] || "", 
+                    sData[10] || "", 
+                    sData[11] || "", 
+                    sData[12] || "", 
+                    sData[13] || "", 
+                    sData[14] || "", 
+                    diaInicialStr,   
+                    diaFinalStr,     
+                    horariosTexto[sData[5]] || "", 
+                    sData[16] || "", 
+                    sData[17] || "NA", 
+                    sData[18] || "", 
+                    sData[19] || ""  
+                ];
+                datosFilas.push(rowVals);
+            });
+            return datosFilas;
+        }
+
+        function renderVaciadoFinal() {
+            const theadTr = document.getElementById('theadVaciadoTr');
+            const tbody = document.getElementById('tbodyVaciado');
+            
+            theadTr.innerHTML = columnasVaciado.map(c => `<th>${c}</th>`).join('');
+            tbody.innerHTML = '';
+
+            const datos = generarFilasDirectorio();
+            if (datos.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="${columnasVaciado.length}" class="text-center py-4 text-muted fst-italic">Configure las fechas de campaña e inste asignaciones en el calendario.</td></tr>`;
+                return;
+            }
+
+            datos.forEach(rowVals => {
+                tbody.innerHTML += `<tr>` + rowVals.map(v => `<td>${v}</td>`).join('') + `</tr>`;
+            });
+        }
+
+        window.exportarExcelOficialPlantillaConEstilos = async function() {
+            try {
+                const response = await fetch('Directorio_de_modulos.xlsx');
+                if (!response.ok) throw new Error("No se pudo cargar la plantilla Directorio_de_modulos.xlsx");
+                const arrayBuffer = await response.arrayBuffer();
+
+                const workbook = new ExcelJS.Workbook();
+                await workbook.xlsx.load(arrayBuffer);
+                
+                let worksheet = workbook.worksheets.find(ws => ws.name.toLowerCase().includes('anexo macs')) || workbook.worksheets[0];
+
+                const datosNuevos = generarFilasDirectorio();
+                if (datosNuevos.length === 0) {
+                    alert("No hay datos para exportar.");
+                    return;
+                }
+
+                const filaReferencia = worksheet.getRow(11);
+
+                datosNuevos.forEach((filaDatos, rowIndex) => {
+                    const numeroFilaActual = 11 + rowIndex;
+                    const filaActual = worksheet.getRow(numeroFilaActual);
+
+                    filaDatos.forEach((valorCelda, colIndex) => {
+                        const numeroColumnaActual = colIndex + 1;
+                        const celdaActual = filaActual.getCell(numeroColumnaActual);
+
+                        celdaActual.value = valorCelda;
+
+                        const celdaReferencia = filaReferencia.getCell(numeroColumnaActual);
+                        if (celdaReferencia && celdaReferencia.style) {
+                            celdaActual.font = Object.assign({}, celdaReferencia.font);
+                            celdaActual.alignment = Object.assign({}, celdaReferencia.alignment);
+                            celdaActual.border = Object.assign({}, celdaReferencia.border);
+                            celdaActual.fill = Object.assign({}, celdaReferencia.fill);
+                            celdaActual.numFmt = celdaReferencia.numFmt;
+                        }
+                    });
+                    filaActual.commit();
+                });
+
+                const buffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = "Directorio_de_Modulos_Distrito03_Oficial.xlsx";
+                link.click();
+            } catch (err) {
+                console.error("Error al exportar con ExcelJS:", err);
+                alert("Asegúrate de que el archivo 'Directorio_de_modulos.xlsx' esté en GitHub junto a index.html. Usando respaldo CSV alternativo...");
+                exportarVaciadoCSV();
+            }
+        };
+
+        window.exportarVaciadoCSV = function() {
+            let csvContent = "\uFEFF" + columnasVaciado.join(",") + "\n";
+            document.querySelectorAll("#tablaVaciadoFinal tbody tr").forEach(tr => {
+                const cols = tr.querySelectorAll("td");
+                if (cols.length > 1) {
+                    csvContent += Array.from(cols).map(c => `"${c.innerText.replace(/"/g, '""')}"`).join(",") + "\n";
+                }
+            });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }));
+            link.download = "directorio_modulos_distrito03.csv";
+            link.click();
+        };
     </script>
+    <!-- Botón Flotante para Regresar al Menú Principal -->
+<a href="https://registro03coah.github.io/mimenu" class="btn-regresar-menu" title="Regresar al Centro de Mando">
+    <i class="fas fa-home"></i> <span>Menú Principal</span>
+</a>
+
+<style>
+    .btn-regresar-menu {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        background: rgba(13, 27, 42, 0.9);
+        color: #fff;
+        padding: 10px 18px;
+        border-radius: 30px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        font-family: 'Poppins', sans-serif;
+        font-size: 0.85rem;
+        font-weight: 600;
+        border: 2px solid #4ea8de;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+        z-index: 9999;
+        transition: all 0.3s ease;
+    }
+
+    .btn-regresar-menu:hover {
+        background: #4ea8de;
+        color: #0d1b2a;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(78, 168, 222, 0.7);
+    }
+</style>
 </body>
 </html>
